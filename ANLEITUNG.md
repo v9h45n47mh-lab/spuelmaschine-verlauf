@@ -1,4 +1,4 @@
-# Spülmaschine Verlauf 0.1.0
+# Spülmaschine Verlauf 0.1.1
 
 Lokale Home-Assistant-Integration für die Verlaufsspeicherung. Keine Cloud und keine zusätzlichen Python-Pakete erforderlich.
 
@@ -21,7 +21,7 @@ Keine Änderung an configuration.yaml erforderlich. Noch keine neue Automation e
 - Unabhängige dauerhafte SQLite-Datei `/config/spuelmaschine_verlauf.sqlite`. Keine automatische zeitliche Löschung, keine Abhängigkeit von der Recorder-Aufbewahrung. Diese Datei in die Sicherung der HA-Konfiguration aufnehmen.
 - Der Verlaufssensor stellt die letzten 30 Datensätze bereit. Alle älteren Einträge bleiben in der Datenbank und sind über die Aktion `spuelmaschine_verlauf.get_history` seitenweise abrufbar.
 - Gleicher Zustand `finished`, HA-Neustart sowie zwischenzeitlich `unknown`/`unavailable` erzeugen keinen weiteren Eintrag desselben Abschlusses. Ein neuer gültiger Nicht-finished-Zustand und anschließend `finished` bilden einen neuen Abschluss.
-- Bei einem weiteren Abschluss ohne vorherige Bestätigung wird der ältere offene Spülgang als **nicht bestätigt** archiviert. Person und Ausräumzeit bleiben dabei leer. Die Einteilung wird dadurch nicht gewechselt. Nur der neueste Spülgang bleibt offen.
+- Bei einem weiteren Abschluss ohne vorherige Bestätigung wird der ältere offene Spülgang als **nicht bestätigt** archiviert. Als Ausräumer wird gemäß Haushaltsregel **Vera/Manuel** eingetragen. Das ist eine automatische Annahme, keine persönliche Bestätigung. Die unbekannte Ausräumzeit und Wartezeit bleiben leer. Die Einteilung wird dadurch nicht gewechselt. Nur der neueste Spülgang bleibt offen.
 - Beim erstmaligen Einrichten mit bereits fertiger Maschine wird keine historische Fertigzeit erfunden. Erst nach einem neuen Statuswechsel kann ein neuer Abschluss erfasst werden.
 - Bei HA-Ausfall kann die tatsächliche Fertigzeit nicht rekonstruiert werden. War vor dem Ausfall ein anderer gültiger Zustand gespeichert und beim Start `finished` sichtbar, wird die Erkennungszeit gespeichert und mit `observed_after_restart: true` markiert. Mehrere vollständig während eines Ausfalls abgelaufene Programme sind nicht rekonstruierbar.
 
@@ -64,6 +64,6 @@ Die Rückgabe enthält `total`, `open_id` und `entries`. Für weitere Seiten `of
 
 ## Prüfung vor Produktivbetrieb
 
-Die beiliegenden zehn Tests prüfen die echte SQLite-Speicherung in temporären Dateien: Neustart, doppelte Abschlüsse, falsches Kind, Elternbestätigung, veraltete Antworten, Idempotenz, Seitenabruf und Transaktions-Rollback. Python-Syntax und JSON wurden ebenfalls geprüft. Ein Lauf in einer echten HA-Instanz war hier nicht möglich; Einrichtung und Erfassung deshalb zunächst in deinem HA testen. Bestehende Spüldienstlogik erst nach dem vollständigen Umstieg deaktivieren.
+Die beiliegenden 13 Tests prüfen die echte SQLite-Speicherung in temporären Dateien: Neustart, doppelte Abschlüsse, falsches Kind, Elternbestätigung, veraltete Antworten, Idempotenz, Seitenabruf und Transaktions-Rollback. Python-Syntax und JSON wurden ebenfalls geprüft. Ein Lauf in einer echten HA-Instanz war hier nicht möglich; Einrichtung und Erfassung deshalb zunächst in deinem HA testen. Bestehende Spüldienstlogik erst nach dem vollständigen Umstieg deaktivieren.
 
 Testaufruf: `python3 -m unittest discover -s tests -v`.

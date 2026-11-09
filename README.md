@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zum lokalen Speichern von Programmenden und Ausräumbestätigungen.
 
-Version **0.1.0** enthält die Verlaufsspeicherung. NFC, Pushnachrichten und Dienstwechsel werden später ergänzt.
+Version **0.1.1** enthält die Verlaufsspeicherung. NFC, Pushnachrichten und Dienstwechsel werden später ergänzt.
 
 ## Installation
 
@@ -16,8 +16,12 @@ Die Historie liegt lokal in `/config/spuelmaschine_verlauf.sqlite`. Sie wird nic
 
 ## Validierung
 
-Zehn SQLite-Tests sind enthalten und erfolgreich. Ein Test in einer echten Home-Assistant-Instanz steht aus.
+13 SQLite-Tests sind enthalten und erfolgreich. Ein Test in einer echten Home-Assistant-Instanz steht aus.
 
 ```sh
 python3 -m unittest discover -s tests -v
 ```
+
+## Neu in 0.1.1
+
+Wird ein neuer Spülgang fertig, während der vorherige noch offen ist, erhält der vorherige als Ausräumer automatisch **Vera/Manuel**. Sein Status bleibt **nicht bestätigt**, weil niemand gescannt hat. Die tatsächliche Ausräumzeit ist unbekannt und bleibt leer. Bereits bestätigte Einträge werden nicht verändert. Der Dienst-Helfer bleibt unverändert. Keine rückwirkende Änderung bereits archivierter Spülgänge.

@@ -44,8 +44,48 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(report['open_id'], second['id'])
         self.assertEqual(report['entries'][1]['status'], 'nicht_bestaetigt')
         self.assertIsNone(report['entries'][1]['emptied_at'])
+        self.assertEqual(report['entries'][1]['emptied_by'], 'Vera/Manuel')
+        self.assertIsNone(report['entries'][1]['waiting_minutes'])
+        self.assertIsNone(report['entries'][0]['emptied_by'])
+        self.assertEqual(report['entries'][0]['assigned_to'], 'Paul')
         with self.assertRaises(ValueError):
             self.repo.record_emptied(first['id'], 'Paul')
+
+    def test_new_finish_after_restart_assigns_parent_fallback(self):
+        self.repo.observe('running', 'Paul')
+        first, _ = self.repo.observe('finished', 'Paul')
+        reloaded = Repository(self.path)
+        reloaded.initialize()
+        reloaded.observe('running', 'Paul')
+        second, created = reloaded.observe('finished', 'Paul')
+        self.assertTrue(created)
+        rows = reloaded.report()['entries']
+        previous = next(r for r in rows if r['id'] == first['id'])
+        self.assertEqual(previous['emptied_by'], 'Vera/Manuel')
+        self.assertEqual(previous['status'], 'nicht_bestaetigt')
+        self.assertIsNone(previous['emptied_at'])
+        self.assertEqual(reloaded.report()['open_id'], second['id'])
+
+    def test_new_cycle_does_not_overwrite_actual_confirmations(self):
+        for index, person in enumerate(['Paul', 'Maximilian', 'Vera', 'Manuel']):
+            assigned = person if person in ['Paul', 'Maximilian'] else 'Paul'
+            cycle, _ = self.repo.record_finished(assigned, f'confirmed-{index}')
+            confirmed, _ = self.repo.record_emptied(cycle['id'], person)
+            self.repo.record_finished('Paul', f'next-{index}')
+            row = next(r for r in self.repo.report()['entries'] if r['id'] == cycle['id'])
+            self.assertEqual(row['emptied_by'], person)
+            self.assertEqual(row['emptied_at'], confirmed['emptied_at'])
+            self.assertEqual(row['status'], 'erledigt')
+
+    def test_duplicate_finish_does_not_assign_parent_fallback(self):
+        self.repo.observe('running', 'Paul')
+        self.repo.observe('finished', 'Paul')
+        self.repo.observe('unavailable', 'Paul')
+        self.repo.observe('finished', 'Paul')
+        report = self.repo.report()
+        self.assertEqual(report['total'], 1)
+        self.assertEqual(report['entries'][0]['status'], 'offen')
+        self.assertIsNone(report['entries'][0]['emptied_by'])
 
     def test_manual_key_is_idempotent_and_does_not_close_current_cycle(self):
         first, _ = self.repo.record_finished('Paul', 'one')

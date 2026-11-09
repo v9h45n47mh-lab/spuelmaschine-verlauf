@@ -46,9 +46,10 @@ class Repository:
             if existing:
                 return dict(existing), False
         stamp = utcnow()
-        # A later wash implies that the earlier load has been removed,
-        # but does not supply evidence of who removed it or when.
-        db.execute("UPDATE cycles SET status='nicht_bestaetigt', closed_at=? WHERE status='offen'", (stamp,))
+        # Household fallback for an unconfirmed previous load. This is an
+        # assumed parent contribution, not a scan or a known emptying time.
+        db.execute("""UPDATE cycles SET status='nicht_bestaetigt',
+            emptied_by='Vera/Manuel', closed_at=? WHERE status='offen'""", (stamp,))
         record_id = uuid4().hex
         db.execute("""INSERT INTO cycles
             (id, cycle_key, finished_at, assigned_to, status, observed_after_restart)
