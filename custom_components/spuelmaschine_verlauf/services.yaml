@@ -1,0 +1,71 @@
+{
+  "record_finished": {
+    "name": "Programmende speichern (manuell/Test)",
+    "description": "Optionaler manueller Eintrag. Im Normalbetrieb speichert die Integration Programmenden automatisch. Gleicher cycle_key erzeugt keinen zweiten Eintrag.",
+    "fields": {
+      "cycle_key": {
+        "name": "Eindeutiger Schlüssel",
+        "required": true,
+        "example": "test-2026-11-09-1",
+        "selector": {
+          "text": {}
+        }
+      }
+    }
+  },
+  "record_emptied": {
+    "name": "Ausräumen speichern",
+    "description": "Speichert eine bereits geprüfte Bestätigung. Ändert den Dienst-Helfer nicht. NFC-Gerät und Antwort müssen zuvor von der Automation geprüft werden.",
+    "fields": {
+      "cycle_id": {
+        "name": "Spülgang-ID",
+        "required": true,
+        "selector": {
+          "text": {}
+        }
+      },
+      "person": {
+        "name": "Bestätigt von",
+        "required": true,
+        "selector": {
+          "select": {
+            "options": [
+              "Maximilian",
+              "Paul",
+              "Vera",
+              "Manuel"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "get_history": {
+    "name": "Verlauf abrufen",
+    "description": "Liefert den gespeicherten Verlauf seitenweise, neueste Einträge zuerst.",
+    "fields": {
+      "limit": {
+        "name": "Anzahl",
+        "default": 100,
+        "selector": {
+          "number": {
+            "min": 1,
+            "max": 1000,
+            "mode": "box"
+          }
+        }
+      },
+      "offset": {
+        "name": "Einträge überspringen",
+        "default": 0,
+        "selector": {
+          "number": {
+            "min": 0,
+            "max": 1000000,
+            "mode": "box"
+          }
+        }
+      }
+    }
+  }
+}

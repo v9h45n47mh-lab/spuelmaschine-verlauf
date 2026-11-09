@@ -1,0 +1,18 @@
+{
+  "title": "Spülmaschine Verlauf",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Spülmaschinenverlauf einrichten",
+        "description": "Programmenden automatisch speichern. Bestehende Pushes und Dienstwechsel werden nicht verändert.",
+        "data": {
+          "source": "Betriebszustand der Spülmaschine",
+          "duty": "Helfer für die Diensteinteilung"
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Der Verlauf ist bereits eingerichtet."
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "domain": "spuelmaschine_verlauf",
+  "name": "Spülmaschine Verlauf",
+  "version": "0.1.0",
+  "config_flow": true,
+  "codeowners": [
+    "@v9h45n47mh-lab"
+  ],
+  "dependencies": [
+    "sensor"
+  ],
+  "iot_class": "local_push",
+  "documentation": "https://github.com/v9h45n47mh-lab/spuelmaschine-verlauf",
+  "issue_tracker": "https://github.com/v9h45n47mh-lab/spuelmaschine-verlauf/issues"
+}
