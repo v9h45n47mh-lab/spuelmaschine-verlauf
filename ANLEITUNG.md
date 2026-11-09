@@ -1,4 +1,4 @@
-# Spülmaschine Verlauf 0.1.1
+# Spülmaschine Verlauf 0.2.0
 
 Lokale Home-Assistant-Integration für die Verlaufsspeicherung. Keine Cloud und keine zusätzlichen Python-Pakete erforderlich.
 
@@ -10,7 +10,7 @@ Lokale Home-Assistant-Integration für die Verlaufsspeicherung. Keine Cloud und 
 4. Einstellungen → Geräte & Dienste → Integration hinzufügen → **Spülmaschine Verlauf**.
 5. Als Betriebszustand `sensor.geschirrspuler_betriebszustand` und als Diensteinteilung `input_select.spuelmaschine_dienst` auswählen.
 6. Im Dropdown-Helfer **Paul** einstellen. Die Integration selbst ändert den Helfer in dieser Version nicht.
-7. Optional eine manuelle Dashboard-Karte hinzufügen und den Inhalt von `dashboard.yaml` einfügen. Unter Entwicklerwerkzeuge → Zustände den tatsächlichen Namen des neuen Verlaufssensors prüfen. Erwartet wird `sensor.spulmaschine_verlauf`; bei einer abweichenden ID diese an beiden Stellen in der Karte ersetzen.
+7. Die bisherige Markdown-Karte durch eine manuelle Dashboard-Karte mit dem Inhalt von `dashboard.yaml` ersetzen. Die neue JavaScript-Karte wird automatisch mit der Integration geladen. Nach dem HA-Neustart den Browser bzw. die Companion-App neu laden. Unter Entwicklerwerkzeuge → Zustände den tatsächlichen Namen des neuen Verlaufssensors prüfen. Erwartet wird `sensor.spulmaschine_verlauf`; bei einer abweichenden ID diese an beiden Stellen in der Karte ersetzen.
 
 Keine Änderung an configuration.yaml erforderlich. Noch keine neue Automation erforderlich: Programmenden werden automatisch beobachtet. Die vorhandene Benachrichtigungsautomation kann zunächst bestehen bleiben.
 

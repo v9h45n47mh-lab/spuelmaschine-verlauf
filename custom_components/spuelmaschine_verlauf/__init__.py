@@ -1,6 +1,9 @@
 """Persistent dishwasher history, deliberately without notifications or duty changes."""
 import asyncio
 import logging
+from pathlib import Path
+from homeassistant.components import frontend
+from homeassistant.components.http import StaticPathConfig
 import voluptuous as vol
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
 from homeassistant.core import CoreState, SupportsResponse, callback
@@ -16,6 +19,10 @@ PLATFORMS = [Platform.SENSOR]
 
 
 async def async_setup(hass, config):
+    await hass.http.async_register_static_paths([StaticPathConfig(
+        '/spuelmaschine-verlauf/card.js',
+        str(Path(__file__).parent / 'card.js'), False)])
+    frontend.add_extra_js_url(hass, '/spuelmaschine-verlauf/card.js?v=0.2.0')
     async def service(call):
         manager = hass.data.get(DOMAIN)
         if manager is None:

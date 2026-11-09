@@ -1,17 +1,6 @@
-type: markdown
-title: Spülmaschinenverlauf
-content: |-
-  {% set rows = state_attr('sensor.spulmaschine_verlauf', 'eintraege') or [] %}
-  {% if rows | count == 0 %}
-  Noch keine Spülgänge gespeichert.
-  {% else %}
-  | Fertig | Dienst | Ausgeräumt | Von | Status |
-  | :--- | :--- | :--- | :--- | :--- |
-  {% for r in rows %}
-  | {{ as_timestamp(r.finished_at) | timestamp_custom('%d.%m.%y %H:%M', true) }}{{ ' ≈' if r.observed_after_restart else '' }} | {{ r.assigned_to }} | {{ as_timestamp(r.emptied_at) | timestamp_custom('%d.%m.%y %H:%M', true) if r.emptied_at else '—' }} | {{ r.emptied_by or '—' }} | {{ {'offen': 'Offen', 'erledigt': 'Erledigt', 'nicht_bestaetigt': 'Nicht bestätigt'}.get(r.status, r.status) }} |
-  {% endfor %}
-
-  Letzte 30 Spülgänge · insgesamt {{ states('sensor.spulmaschine_verlauf') }}.
-
-  ≈ Nach HA-Neustart erkannt; tatsächliche Fertigzeit unbekannt.
-  {% endif %}
+type: custom:spuelmaschine-verlauf-card
+entity: sensor.spulmaschine_verlauf
+duty_entity: input_select.spuelmaschine_dienst
+title: Spülmaschine
+history_open: false
+max_entries: 30
