@@ -1,5 +1,5 @@
-/* Spülmaschine Verlauf 0.3.1 — local, read-only dashboard card. */
-const SV_VERSION = '0.3.1';
+/* Spülmaschine Verlauf 0.3.2 — local, read-only dashboard card. */
+const SV_VERSION = '0.3.2';
 const svEscape = value => String(value ?? '').replace(/[&<>"']/g,
   char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const svDate = (value, hass, date = true) => {
@@ -107,8 +107,8 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
     this._signature = signature;
     this._rememberFolds();
     const visible = rows.filter(row => row.emptied_by && row.status !== 'offen').slice(0,this._config.max_entries);
-    this.shadowRoot.innerHTML = `<style>${SV_STYLE}</style><ha-card>
-      <div class="header"><ha-icon icon="mdi:dishwasher" aria-hidden="true"></ha-icon><span class="title">${svEscape(this._config.title)}</span>${this._canSettings() ? `<button class="settings-button" aria-label="${this._settings ? 'Zurück zur Spülmaschine' : 'Einstellungen'}" title="Einstellungen" aria-pressed="${this._settings}"><ha-icon icon="mdi:cog"></ha-icon></button>` : ''}</div>
+    this.shadowRoot.innerHTML = `<style>${SV_STYLE}.header .settings-button{border:0;background:transparent;width:48px;min-width:48px;min-height:48px;flex-shrink:0;display:grid;place-items:center;padding:12px;border-radius:0;color:var(--secondary-text-color,#727272);cursor:pointer}.header .settings-button[aria-pressed="true"]{color:var(--primary-color,#03a9f4);background:color-mix(in srgb,var(--primary-color,#03a9f4) 8%,transparent)}.header .settings-button svg{width:24px;height:24px;fill:currentColor}@media(max-width:600px){.header .settings-button{width:42px;min-width:42px;padding:9px}}</style><ha-card>
+      <div class="header"><ha-icon icon="mdi:dishwasher" aria-hidden="true"></ha-icon><span class="title">${svEscape(this._config.title)}</span>${this._canSettings() ? `<button class="settings-button" aria-label="${this._settings ? 'Zurück zur Spülmaschine' : 'Einstellungen'}" title="Einstellungen" aria-pressed="${this._settings}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.63l-1.92-3.32a.49.49 0 0 0-.6-.22l-2.39.96a7.1 7.1 0 0 0-1.62-.94l-.36-2.54a.49.49 0 0 0-.49-.42h-3.84a.49.49 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.6.22L2.68 8.85a.49.49 0 0 0 .12.63l2.03 1.58a7.3 7.3 0 0 0 0 1.88L2.8 14.52a.49.49 0 0 0-.12.63l1.92 3.32c.12.22.38.31.6.22l2.39-.96c.49.38 1.03.7 1.62.94l.36 2.54c.04.24.24.42.49.42h3.84c.25 0 .45-.18.49-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.09.48 0 .6-.22l1.92-3.32a.49.49 0 0 0-.12-.63zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg></button>` : ''}</div>
       <div class="content">${this._settings ? this._statistics(attributes.statistik, unavailable) : `<div class="assignment"><span class="label">Als Nächstes</span><strong class="person">${svEscape(dutyValue)}</strong></div>
       ${unavailable ? `<div class="warning">Verlaufssensor nicht verfügbar. Entität und Leseberechtigung prüfen: ${svEscape(this._config.entity)}</div>` : openId ? `<div class="notice waiting"><strong>${svEscape(current?.assigned_to || dutyValue)} ist mit dem Ausräumen dran.</strong>${current ? `<small>Fertig seit ${svEscape(svDate(current.finished_at,this._hass))}${current.observed_after_restart ? ' ≈' : ''}</small>` : ''}<small>Nach dem Ausräumen den NFC-Tag scannen.</small></div>` : '<div class="notice">Aktuell kein Ausräumen offen.</div>'}
       ${this._history(visible, unavailable)}`}

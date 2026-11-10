@@ -4,7 +4,7 @@
 
 Home-Assistant-Integration zum lokalen Speichern von Programmenden und Ausräumbestätigungen.
 
-Version **0.3.1** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
+Version **0.3.2** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
 
 ## Installation
 

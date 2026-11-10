@@ -1,5 +1,9 @@
 # Änderungen
 
+## 0.3.2
+
+- Einstellungssymbol exakt wie im Shutter Manager: identisches SVG, 24 px, grau im Normalzustand und HA-Akzentfarbe mit getöntem Hintergrund bei geöffneten Einstellungen.
+
 ## 0.3.1
 
 - Statistik als Gesamtübersicht je Benutzer über den vollständigen gespeicherten Zeitraum; keine Monatsunterteilung in den Einstellungen.

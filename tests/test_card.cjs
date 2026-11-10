@@ -37,7 +37,7 @@ assert.ok(card.shadowRoot.querySelector('.history'));
 assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"]').open,true);
 assert.equal(card.shadowRoot.querySelector('.version'),null);
 card.shadowRoot.querySelector('.settings-button').click();
-assert.equal(card.shadowRoot.querySelector('.version').textContent,'Version 0.3.1');
+assert.equal(card.shadowRoot.querySelector('.version').textContent,'Version 0.3.2');
 h.user={id:'paul-account',name:'Paul',is_admin:true};card.hass=h;
 assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
 assert.equal(card.shadowRoot.querySelector('.statistics'),null);
