@@ -1,6 +1,6 @@
 import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI, statisticsTable, counter} from './family-ui/1.2.0/family-ui.js';
-/* Spülmaschine Verlauf 0.4.2 — local, read-only dashboard card. */
-const SV_VERSION = '0.4.2';
+/* Spülmaschine Verlauf 0.4.3 — local, read-only dashboard card. */
+const SV_VERSION = '0.4.3';
 const svEscape=escapeHtml;
 const svDate = (value, hass, date = true) => {
   if (!value) return '—';
@@ -27,7 +27,7 @@ const svMonth = (value, hass) => {
 };
 const svMonthTitle = key => /^\d{4}-\d{2}$/.test(key)
   ? new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${key}-01T12:00:00Z`)) : 'Monat unbekannt';
-// Only domain-specific statistics layout; shared controls use UI_CSS.
+// All visual styling comes from the pinned UI Kit.
 
 class SpuelmaschineVerlaufCard extends HTMLElement {
   constructor(){super();this.attachShadow({mode:'open'});this._signature='';this._settings=false;this._folds=new Map();this._bindUI();}
@@ -62,8 +62,8 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
   _history(visible,unavailable){
     const groups=new Map();visible.forEach(entry=>{const month=svMonth(entry.emptied_at||entry.finished_at,this._hass);if(!groups.has(month))groups.set(month,[]);groups.get(month).push(entry);});
     const months=[...groups.keys()].sort().reverse();
-    const content=unavailable?notice('Der Verlauf kann derzeit nicht angezeigt werden.'):months.length?months.map(key=>`<div class="month fui-history-month" data-fold="${svEscape(key)}">${section({id:'month-'+key,title:svMonthTitle(key),expanded:this._folds.get(key)||false,trailing:`<small>${groups.get(key).length}</small>`,content:groups.get(key).map(entry=>this._entry(entry)).join('')})}</div>`).join(''):notice('Noch kein Ausräumen gespeichert.');
-    return `<div class="history" data-fold="history">${section({id:'history',title:'Verlauf',expanded:this._folds.get('history')??this._config.history_open,trailing:`<small>${unavailable?'—':visible.length} Einträge</small>`,content})}</div>`;
+    const content=unavailable?notice('Der Verlauf kann derzeit nicht angezeigt werden.'):months.length?months.map(key=>`<div class="month fui-history-month" data-fold="${svEscape(key)}">${section({id:'month-'+key,title:svMonthTitle(key),expanded:this._folds.get(key)||false,trailing:counter(groups.get(key).length),content:groups.get(key).map(entry=>this._entry(entry)).join('')})}</div>`).join(''):notice('Noch kein Ausräumen gespeichert.');
+    return `<div class="history" data-fold="history">${section({id:'history',title:'Verlauf',expanded:this._folds.get('history')??this._config.history_open,trailing:counter((unavailable?'—':visible.length)+' Einträge'),content})}</div>`;
   }
   _statistics(stats, unavailable) {
     const total = {count:0,assumed:0,people:{'Maximilian':0,'Paul':0,'Vera / Manuel':0}};

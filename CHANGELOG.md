@@ -1,5 +1,11 @@
 # Änderungen
 
+## 0.4.3
+
+- Sämtliche lokalen visuellen CSS-Überschreibungen entfernt; Gestaltung ausschließlich aus HA UI Kit 1.2.0.
+- Gemeinsame Wiederholungs-, Erledigungs-, Button-, Dialog- und Zählerbausteine direkt mit bestehenden Abläufen verbunden.
+- Fachlogik, Berechtigungen, Live-Sync und NFC-Verarbeitung erhalten.
+
 ## 0.4.2
 
 - HA UI Kit auf fest eingebundene Version 1.2.0 aktualisiert.
