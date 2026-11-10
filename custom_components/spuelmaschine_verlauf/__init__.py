@@ -22,7 +22,7 @@ async def async_setup(hass, config):
     await hass.http.async_register_static_paths([StaticPathConfig(
         '/spuelmaschine-verlauf/card.js',
         str(Path(__file__).parent / 'card.js'), False)])
-    frontend.add_extra_js_url(hass, '/spuelmaschine-verlauf/card.js?v=0.2.0')
+    frontend.add_extra_js_url(hass, '/spuelmaschine-verlauf/card.js?v=0.2.1')
     async def service(call):
         manager = hass.data.get(DOMAIN)
         if manager is None:

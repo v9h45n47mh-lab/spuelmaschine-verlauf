@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.2.1
+
+- Versionsanzeige im Kartenfuß und Status oben rechts entfernt.
+- Verlauf auf Ausräumer und Ausräumzeit reduziert; offene Spülgänge erscheinen weiterhin nur im Hauptbereich.
+- Vera, Manuel und automatische Vera/Manuel-Zuordnungen werden einheitlich als Vera & Manuel dargestellt.
+- Unbekannte Ausräumzeiten bleiben als unbekannt gekennzeichnet; gespeicherte Daten werden nicht umgeschrieben.
+
 ## 0.2.0
 
 - Eigene Dashboard-Karte im Stil von Light Manager und Shutter Manager.

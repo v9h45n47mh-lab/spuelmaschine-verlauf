@@ -46,3 +46,7 @@ max_entries: 30
 Bei umbenanntem Verlaufssensor `entity` anpassen. `history_open: true` klappt den Verlauf initial auf. Access Control benötigt Leserechte auf beide konfigurierten Entitäten; weitere Rechte oder API-Freigaben kommen durch diese Karte nicht hinzu. Das alte Markdown-YAML bleibt nutzbar, wird aber nicht automatisch umgebaut.
 
 Frontend-Prüfung mit Node.js und `linkedom`: `node tests/test_card.cjs`. Die DOM-Prüfungen decken Zustände, Zeitformatierung, aufklappbare Details und sicheres Einfügen von Text ab. Ein visueller Test in deiner HA-Instanz steht aus.
+
+## Darstellung ab 0.2.1
+
+Die Karte hat keine Versionszeile und keinen Status oben rechts. Der aufklappbare Verlauf zeigt ausschließlich Ausräumer und Ausräumzeit. Vera und Manuel erscheinen unter der gemeinsamen Bezeichnung **Vera & Manuel**. Automatisch zugeordnete Einträge ohne Ausräumzeit zeigen **Zeitpunkt unbekannt**. Offene Spülgänge stehen nur im Hauptbereich. Die vorhandene YAML-Konfiguration bleibt gültig. Die Begrenzung auf die letzten 30 Spülgänge des Verlaufssensors bleibt bestehen.
