@@ -37,7 +37,7 @@ assert.ok(card.shadowRoot.querySelector('.history'));
 assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"] .settings-fold').getAttribute('aria-expanded'),'true');
 assert.equal(card.shadowRoot.querySelector('.version-info'),null);
 card.shadowRoot.querySelector('.settings-button').click();
-assert.equal(card.shadowRoot.querySelector('.version-info').textContent,'Oberfläche 0.4.0 · UI 1.0.0');
+assert.equal(card.shadowRoot.querySelector('.version-info').textContent,'Oberfläche 0.4.1 · UI 1.1.0');
 h.user={id:'paul-account',name:'Paul',is_admin:true};card.hass=h;
 assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
 assert.equal(card.shadowRoot.querySelector('.statistics'),null);

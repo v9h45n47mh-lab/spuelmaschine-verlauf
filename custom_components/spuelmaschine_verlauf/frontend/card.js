@@ -1,6 +1,6 @@
-import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI} from './family-ui/1.0.0/family-ui.js';
-/* Spülmaschine Verlauf 0.4.0 — local, read-only dashboard card. */
-const SV_VERSION = '0.4.0';
+import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI} from './family-ui/1.1.0/family-ui.js';
+/* Spülmaschine Verlauf 0.4.1 — local, read-only dashboard card. */
+const SV_VERSION = '0.4.1';
 const svEscape=escapeHtml;
 const svDate = (value, hass, date = true) => {
   if (!value) return '—';
