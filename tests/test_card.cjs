@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),{readFileSync}=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {parseHTML}=require('linkedom');const {window}=parseHTML('<html><body></body></html>');
 Object.defineProperty(window.HTMLElement.prototype,'open',{get(){return this.hasAttribute('open')},set(v){v?this.setAttribute('open',''):this.removeAttribute('open')}});
-vm.runInNewContext(require('./card_source.cjs')(),{window,HTMLElement:window.HTMLElement,customElements:window.customElements,Intl,Date,Set,Number,JSON,String});
+vm.runInNewContext(require('./card_source.cjs')(),{window,MutationObserver:window.MutationObserver,HTMLElement:window.HTMLElement,customElements:window.customElements,Intl,Date,Set,Number,JSON,String});
 const C=window.customElements.get('spuelmaschine-verlauf-card'),card=new C();card.setConfig({});
 const rows=['Vera','Manuel','Vera/Manuel','Paul'].map((person,i)=>({id:String(i),emptied_by:person,status:i===2?'nicht_bestaetigt':'erledigt',emptied_at:i===2?null:'2026-11-10T12:00:00Z',finished_at:'2026-11-10T10:00:00Z'}));rows.push({id:'open',status:'offen',assigned_to:'Maximilian'});
 const h={user:{id:'vera-account',name:'Vera'},locale:{language:'de-DE'},config:{time_zone:'Europe/Berlin'},states:{'sensor.spulmaschine_verlauf':{state:'5',attributes:{eintraege:rows,offener_spuelgang:'open'}},'input_select.spuelmaschine_dienst':{state:'Maximilian'}}};card.hass=h;
@@ -37,7 +37,7 @@ assert.ok(card.shadowRoot.querySelector('.history'));
 assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"] .settings-fold').getAttribute('aria-expanded'),'true');
 assert.equal(card.shadowRoot.querySelector('.version-info'),null);
 card.shadowRoot.querySelector('.settings-button').click();
-assert.equal(card.shadowRoot.querySelector('.version-info').textContent,'Oberfläche 0.4.1 · UI 1.1.0');
+assert.equal(card.shadowRoot.querySelector('.version-info').textContent,'Oberfläche 0.4.2 · UI 1.2.0');
 h.user={id:'paul-account',name:'Paul',is_admin:true};card.hass=h;
 assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
 assert.equal(card.shadowRoot.querySelector('.statistics'),null);

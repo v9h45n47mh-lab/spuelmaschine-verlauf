@@ -1,6 +1,6 @@
-import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI} from './family-ui/1.1.0/family-ui.js';
-/* Spülmaschine Verlauf 0.4.1 — local, read-only dashboard card. */
-const SV_VERSION = '0.4.1';
+import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI, statisticsTable, counter} from './family-ui/1.2.0/family-ui.js';
+/* Spülmaschine Verlauf 0.4.2 — local, read-only dashboard card. */
+const SV_VERSION = '0.4.2';
 const svEscape=escapeHtml;
 const svDate = (value, hass, date = true) => {
   if (!value) return '—';
@@ -28,7 +28,7 @@ const svMonth = (value, hass) => {
 const svMonthTitle = key => /^\d{4}-\d{2}$/.test(key)
   ? new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${key}-01T12:00:00Z`)) : 'Monat unbekannt';
 // Only domain-specific statistics layout; shared controls use UI_CSS.
-const SV_STYLE=`.statistics table{width:100%;border-collapse:collapse;font-size:13px}.statistics th,.statistics td{padding:var(--fui-row-padding) 0;border-bottom:1px solid var(--divider-color,#e0e0e0);text-align:left;overflow-wrap:anywhere}.statistics td:last-child,.statistics th:last-child{text-align:right}.statistics .stat-total{font-weight:500}.month{margin-left:8px}.history-row small{text-align:right}`;
+
 class SpuelmaschineVerlaufCard extends HTMLElement {
   constructor(){super();this.attachShadow({mode:'open'});this._signature='';this._settings=false;this._folds=new Map();this._bindUI();}
   _bindUI(){this._unbindUI ||= bindUI(this.shadowRoot,({action,data})=>{if(action==='navigate'&&(data.page!=='settings'||this._canSettings())){this._rememberFolds();this._settings=data.page==='settings';this._signature='';this._render();}});}
@@ -62,7 +62,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
   _history(visible,unavailable){
     const groups=new Map();visible.forEach(entry=>{const month=svMonth(entry.emptied_at||entry.finished_at,this._hass);if(!groups.has(month))groups.set(month,[]);groups.get(month).push(entry);});
     const months=[...groups.keys()].sort().reverse();
-    const content=unavailable?notice('Der Verlauf kann derzeit nicht angezeigt werden.'):months.length?months.map(key=>`<div class="month" data-fold="${svEscape(key)}">${section({id:'month-'+key,title:svMonthTitle(key),expanded:this._folds.get(key)||false,trailing:`<small>${groups.get(key).length}</small>`,content:groups.get(key).map(entry=>this._entry(entry)).join('')})}</div>`).join(''):notice('Noch kein Ausräumen gespeichert.');
+    const content=unavailable?notice('Der Verlauf kann derzeit nicht angezeigt werden.'):months.length?months.map(key=>`<div class="month fui-history-month" data-fold="${svEscape(key)}">${section({id:'month-'+key,title:svMonthTitle(key),expanded:this._folds.get(key)||false,trailing:`<small>${groups.get(key).length}</small>`,content:groups.get(key).map(entry=>this._entry(entry)).join('')})}</div>`).join(''):notice('Noch kein Ausräumen gespeichert.');
     return `<div class="history" data-fold="history">${section({id:'history',title:'Verlauf',expanded:this._folds.get('history')??this._config.history_open,trailing:`<small>${unavailable?'—':visible.length} Einträge</small>`,content})}</div>`;
   }
   _statistics(stats, unavailable) {
@@ -72,7 +72,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
       total.assumed += Number(month.assumed) || 0;
       Object.keys(total.people).forEach(person=>{total.people[person] += Number(month.people?.[person]) || 0;});
     });
-    const content=unavailable?notice('Statistik nicht verfügbar.'):!Array.isArray(stats)?notice('Statistik noch nicht verfügbar. Integration aktualisieren und Home Assistant neu starten.'):`<p class="hint">Gesamter gespeicherter Zeitraum</p><table aria-label="Gesamtstatistik"><thead><tr><th>Benutzer</th><th>Anzahl</th></tr></thead><tbody>${Object.keys(total.people).map(person=>`<tr><td>${svEscape(person)}</td><td>${svEscape(total.people[person])}</td></tr>`).join('')}<tr class="stat-total"><td>Gesamt</td><td>${svEscape(total.count)}</td></tr></tbody></table>${total.assumed?notice('Davon '+total.assumed+' automatisch Vera / Manuel zugeordnet, ohne Scan.'):''}${notice('Alle gespeicherten Ausräumvorgänge, auch ältere als die letzten 30 Spülgänge. Offene Spülgänge zählen nicht.')}`;
+    const content=unavailable?notice('Statistik nicht verfügbar.'):!Array.isArray(stats)?notice('Statistik noch nicht verfügbar. Integration aktualisieren und Home Assistant neu starten.'):`<p class="hint">Gesamter gespeicherter Zeitraum</p>${statisticsTable({label:'Gesamtstatistik',columns:[{label:'Benutzer'},{label:'Anzahl',align:'right'}],rows:Object.keys(total.people).map(person=>[person,total.people[person]]),totals:['Gesamt',total.count]})}${total.assumed?notice('Davon '+total.assumed+' automatisch Vera / Manuel zugeordnet, ohne Scan.'):''}${notice('Alle gespeicherten Ausräumvorgänge, auch ältere als die letzten 30 Spülgänge. Offene Spülgänge zählen nicht.')}`;
     return `<div class="statistics">${section({id:'statistics',title:'Statistik',content})}${versionInfo({frontend:SV_VERSION,ui:UI_VERSION})}</div>`;
   }
   _render() {
@@ -91,7 +91,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
     this._signature = signature;
     this._rememberFolds();
     const visible = rows.filter(row => row.emptied_by && row.status !== 'offen').slice(0,this._config.max_entries);
-    this.shadowRoot.innerHTML=`<style>${UI_CSS}${SV_STYLE}</style><ha-card>
+    this.shadowRoot.innerHTML=`<style>${UI_CSS}</style><ha-card>
     ${navigation({label:this._config.title,items:[{id:'overview',label:this._config.title}],active:this._settings?'settings':'overview',settings:this._canSettings(),help:false})}
     <main>${this._settings?this._statistics(attributes.statistik,unavailable):row({title:'Als Nächstes',trailing:`<strong>${svEscape(dutyValue)}</strong>`})+
     (unavailable?notice('Verlaufssensor nicht verfügbar. Entität und Leseberechtigung prüfen: '+this._config.entity,{error:true}):openId?row({title:(current?.assigned_to||dutyValue)+' ist mit dem Ausräumen dran.',description:(current?'Fertig seit '+svDate(current.finished_at,this._hass)+(current.observed_after_restart?' ≈':'')+' · ':'')+'Nach dem Ausräumen den NFC-Tag scannen.'}):notice('Aktuell kein Ausräumen offen.'))+this._history(visible,unavailable)}
