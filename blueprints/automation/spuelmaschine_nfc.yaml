@@ -1,0 +1,99 @@
+blueprint:
+  name: Spülmaschine – NFC direkt ausräumen
+  description: >-
+    Ein berechtigter Scan speichert das Ausräumen sofort, ohne Rückfrage.
+    Vera und Manuel dürfen jeden offenen Spülgang abschließen; Maximilian und
+    Paul nur ihren eigenen Dienst. Nur nach einem Kinder-Scan wechselt der Dienst.
+    Ersetzt die bisherige NFC-Automation vollständig. Benötigt Spülmaschine Verlauf.
+  domain: automation
+  source_url: https://github.com/v9h45n47mh-lab/spuelmaschine-verlauf/blob/main/blueprints/automation/spuelmaschine_nfc.yaml
+  input:
+    tag_id:
+      name: Tag-ID
+      selector:
+        text: {}
+    history_entity:
+      name: Verlaufssensor
+      default: sensor.spulmaschine_verlauf
+      selector:
+        entity:
+          domain: sensor
+    duty_entity:
+      name: Diensteinteilung
+      default: input_select.spuelmaschine_dienst
+      selector:
+        entity:
+          domain: input_select
+    manuel_device:
+      name: Manuels iPhone
+      selector:
+        device:
+          integration: mobile_app
+    vera_device:
+      name: Veras iPhone
+      selector:
+        device:
+          integration: mobile_app
+    maximilian_device:
+      name: Maximilians iPhone
+      selector:
+        device:
+          integration: mobile_app
+    paul_device:
+      name: Pauls iPhone
+      selector:
+        device:
+          integration: mobile_app
+triggers:
+  - trigger: event
+    event_type: tag_scanned
+    event_data:
+      tag_id: !input tag_id
+conditions: []
+actions:
+  # Variables are deliberately read at execution time, not before queueing:
+  # a duplicate queued scan must see the already closed cycle.
+  - variables:
+      history_entity: !input history_entity
+      duty_entity: !input duty_entity
+      manuel_device: !input manuel_device
+      vera_device: !input vera_device
+      maximilian_device: !input maximilian_device
+      paul_device: !input paul_device
+  - variables:
+      person: >-
+        {% set devices = {manuel_device: 'Manuel', vera_device: 'Vera',
+                          maximilian_device: 'Maximilian', paul_device: 'Paul'} %}
+        {{ devices.get(trigger.event.data.get('device_id', ''), '') }}
+      cycle_id: "{{ state_attr(history_entity, 'offener_spuelgang') }}"
+  - condition: template
+    value_template: >-
+      {{ [manuel_device, vera_device, maximilian_device, paul_device] | unique | list | count == 4
+         and person in ['Manuel', 'Vera', 'Maximilian', 'Paul']
+         and cycle_id not in [none, '', 'unknown', 'unavailable'] }}
+  - condition: template
+    value_template: >-
+      {% set entries = state_attr(history_entity, 'eintraege') or [] %}
+      {% set cycle = entries | selectattr('id', 'eq', cycle_id) | list %}
+      {{ cycle | count == 1 and cycle[0].status == 'offen'
+         and (person in ['Vera', 'Manuel']
+              or (person == states(duty_entity) and person == cycle[0].assigned_to)) }}
+  - action: spuelmaschine_verlauf.record_emptied
+    data:
+      cycle_id: "{{ cycle_id }}"
+      person: "{{ person }}"
+    response_variable: result
+  - if:
+      - condition: template
+        value_template: >-
+          {{ result.changed and person in ['Maximilian', 'Paul']
+             and states(duty_entity) == person }}
+    then:
+      - action: input_select.select_option
+        target:
+          entity_id: !input duty_entity
+        data:
+          option: "{{ 'Paul' if person == 'Maximilian' else 'Maximilian' }}"
+mode: queued
+max: 10
+max_exceeded: silent

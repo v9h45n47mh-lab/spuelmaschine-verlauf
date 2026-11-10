@@ -1,5 +1,13 @@
 # Änderungen
 
+## 0.2.2
+
+- Importierbare NFC-Automation: Scan speichert das Ausräumen sofort, ohne Dialog oder Push-Rückfrage.
+- Vera/Manuel dürfen jeden offenen Spülgang abschließen; Kinder nur bei passender aktueller Einteilung und Spülgang-Zuordnung.
+- Dienstwechsel nur nach erfolgreichem Kinder-Scan; Eltern ändern die Einteilung nicht.
+- Unbekannte Geräte, fehlende offene Spülgänge und doppelte Scans bleiben ohne Änderung.
+- Die bisherige separate NFC-Automation muss einmalig ersetzt werden; das HACS-Update allein ändert sie nicht.
+
 ## 0.2.1
 
 - Versionsanzeige im Kartenfuß und Status oben rechts entfernt.

@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zum lokalen Speichern von Programmenden und Ausräumbestätigungen.
 
-Version **0.2.0** enthält die Verlaufsspeicherung. NFC, Pushnachrichten und Dienstwechsel werden später ergänzt.
+Version **0.2.2** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
 
 ## Installation
 
@@ -50,3 +50,21 @@ Frontend-Prüfung mit Node.js und `linkedom`: `node tests/test_card.cjs`. Die DO
 ## Darstellung ab 0.2.1
 
 Die Karte hat keine Versionszeile und keinen Status oben rechts. Der aufklappbare Verlauf zeigt ausschließlich Ausräumer und Ausräumzeit. Vera und Manuel erscheinen unter der gemeinsamen Bezeichnung **Vera & Manuel**. Automatisch zugeordnete Einträge ohne Ausräumzeit zeigen **Zeitpunkt unbekannt**. Offene Spülgänge stehen nur im Hauptbereich. Die vorhandene YAML-Konfiguration bleibt gültig. Die Begrenzung auf die letzten 30 Spülgänge des Verlaufssensors bleibt bestehen.
+
+## NFC ohne Rückfrage ab 0.2.2
+
+**Das HACS-Update allein ersetzt keine bestehende Automation.**
+
+1. HACS-Update installieren und Home Assistant neu starten.
+2. Unter Einstellungen → Automationen & Szenen → Blaupausen die URL importieren:
+   `https://github.com/v9h45n47mh-lab/spuelmaschine-verlauf/blob/main/blueprints/automation/spuelmaschine_nfc.yaml`
+3. Aus der Blaupause eine Automation anlegen. Tag-ID, Verlaufssensor, Diensteinteilung und die vier unterschiedlichen Companion-App-Geräte auswählen.
+4. Bisherige Automation **Spülmaschine – NFC Ausräumen bestätigen** deaktivieren und neue Automation aktivieren. Keine weitere Automation darf für denselben Scan den Dienst wechseln.
+
+Der Scan speichert sofort Ausräumer und Zeitpunkt. Vera und Manuel können jeden offenen Spülgang abschließen; dabei bleibt der Dienst unverändert. Maximilian und Paul dürfen nur scannen, wenn sowohl die aktuelle Diensteinteilung als auch der offene Spülgang zu ihnen passen. Danach wechselt der Dienst zum anderen Kind. Unbekannte Geräte und Scans ohne offenen Spülgang ändern nichts. Wiederholte Scans erzeugen keinen zweiten Eintrag oder Dienstwechsel.
+
+Die Prüfung erfolgt anhand der registrierten Companion-App-Geräte-ID. Dieselbe Geräte-ID darf nicht mehreren Personen zugeordnet sein. Ein physisches Lesen des NFC-Tags durch andere Personen lässt sich nicht verhindern; ihre Scans werden verworfen. Bestehende Access-Control-Freigaben für NFC bleiben erforderlich.
+
+Die Datenbank und das Dashboard-YAML bleiben unverändert. Die Vorlage wird nicht automatisch aktiviert. Ein Test in einer laufenden HA-Instanz steht aus.
+
+Prüfung ab 0.2.2: 20 Tests (SQLite und NFC-Vorlagen mit PyYAML/Jinja2) sowie Frontend-DOM-Prüfungen erfolgreich. Zum Testen zusätzlich `python3 -m pip install PyYAML Jinja2` installieren; die Integration selbst braucht diese zusätzlichen Pakete nicht.

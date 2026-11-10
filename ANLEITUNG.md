@@ -1,3 +1,7 @@
+# Aktueller NFC-Ablauf ab 0.2.2
+
+Die Einrichtung der neuen NFC-Blaupause ohne Dialog steht in [README.md](README.md#nfc-ohne-rückfrage-ab-022). Sie ersetzt die bisherige separate NFC-Automation. Die folgenden Abschnitte dokumentieren den ursprünglichen Speicherbaustein; Aussagen zu späterem NFC-Ausbau sind historisch.
+
 # Spülmaschine Verlauf 0.2.0
 
 Lokale Home-Assistant-Integration für die Verlaufsspeicherung. Keine Cloud und keine zusätzlichen Python-Pakete erforderlich.

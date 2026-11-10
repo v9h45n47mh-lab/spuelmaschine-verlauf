@@ -15,7 +15,7 @@
   },
   "record_emptied": {
     "name": "Ausräumen speichern",
-    "description": "Speichert eine bereits geprüfte Bestätigung. Ändert den Dienst-Helfer nicht. NFC-Gerät und Antwort müssen zuvor von der Automation geprüft werden.",
+    "description": "Speichert das Ausräumen nach einem geprüften NFC-Scan oder einem anderen vertrauenswürdigen Auslöser. Ändert den Dienst-Helfer nicht. Das Gerät muss zuvor von der Automation geprüft werden.",
     "fields": {
       "cycle_id": {
         "name": "Spülgang-ID",
