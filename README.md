@@ -2,7 +2,7 @@
 
 Home-Assistant-Integration zum lokalen Speichern von Programmenden und Ausräumbestätigungen.
 
-Version **0.2.2** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
+Version **0.3.0** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
 
 ## Installation
 
@@ -68,3 +68,23 @@ Die Prüfung erfolgt anhand der registrierten Companion-App-Geräte-ID. Dieselbe
 Die Datenbank und das Dashboard-YAML bleiben unverändert. Die Vorlage wird nicht automatisch aktiviert. Ein Test in einer laufenden HA-Instanz steht aus.
 
 Prüfung ab 0.2.2: 20 Tests (SQLite und NFC-Vorlagen mit PyYAML/Jinja2) sowie Frontend-DOM-Prüfungen erfolgreich. Zum Testen zusätzlich `python3 -m pip install PyYAML Jinja2` installieren; die Integration selbst braucht diese zusätzlichen Pakete nicht.
+
+## Monatsverlauf und Statistik ab 0.3.0
+
+Der Verlauf ist nach Monat und Jahr gruppiert. Die Monatsgruppen sind einzeln aufklappbar; ihr Zustand bleibt bei Aktualisierungen und beim Wechsel zwischen Hauptseite und Einstellungen erhalten. Die Elternanzeige lautet überall **Vera / Manuel**. Bei bekanntem Ausräumzeitpunkt gilt dessen Monat, sonst der Monat des Programmendes. Der Hauptverlauf zeigt weiterhin die Einträge aus den letzten 30 Spülgängen (bzw. `max_entries`).
+
+Das Zahnrad öffnet die Einstellungen mit Versionsnummer und Statistik. Je Monat werden Gesamtanzahl und Anzahl für Maximilian, Paul sowie Vera / Manuel angezeigt. Die Statistik zählt **alle** gespeicherten Ausräumvorgänge, unabhängig von der Begrenzung des Verlaufs. Offene Spülgänge zählen nicht. Automatische Elternzuordnungen ohne Scan werden mitgezählt und mit ihrer Anzahl ausdrücklich gekennzeichnet. Die Monatsstatistik wird in der HA-Zeitzone berechnet.
+
+Einstellungen werden nur den HA-Konten Vera und Manuel angezeigt. Ohne zusätzliche Konfiguration erkennt die Karte den ersten Namensteil des angemeldeten HA-Benutzers (Vera oder Manuel, Groß-/Kleinschreibung egal, z. B. auch Manuel Wagner). Adminstatus allein genügt nicht. Bei anderen Kontonamen oder für eine feste Kontozuordnung die beiden tatsächlichen **HA-Benutzer-IDs** in der Karte ergänzen (keine iPhone-Geräte-IDs):
+
+```yaml
+settings_users:
+  - HIER_VERAS_HA_BENUTZER_ID
+  - HIER_MANUELS_HA_BENUTZER_ID
+```
+
+Eine ausdrücklich gesetzte Liste ersetzt die Namenserkennung; `settings_users: []` blendet Einstellungen für alle aus. Diese Einstellung steuert die Sichtbarkeit der Kartenansicht. Die Statistik liegt als Attribut `statistik` auf demselben Verlaufssensor und unterliegt dessen bestehenden HA-/Access-Control-Leserechten.
+
+Update über Marketplace/HACS installieren, Home Assistant neu starten und Dashboard/Companion-App neu laden. Das bestehende Dashboard-YAML bleibt gültig. NFC-Blaupause und Benachrichtigungsautomationen müssen für dieses Update nicht verändert werden.
+
+Validierung 0.3.0: 23 Tests einschließlich Monatsgrenzen in Europe/Berlin, Jahreswechsel, vollständiger Statistik, zusammengefassten Eltern und gekennzeichneten automatischen Zuordnungen. DOM-Prüfungen für Monatssortierung, Klappzustände, Einstellungsrechte und Versionsanzeige. Ein visueller Live-Test in HA steht aus.

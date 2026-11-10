@@ -1,5 +1,14 @@
 # Änderungen
 
+## 0.3.0
+
+- Verlauf nach Monat/Jahr gruppiert; jede Monatsgruppe lässt sich auf- und zuklappen.
+- Elternanzeige einheitlich Vera / Manuel.
+- Zahnrad öffnet Einstellungen mit Monatsstatistik über die vollständige gespeicherte Historie: Gesamt und Anzahl je Maximilian, Paul und Vera / Manuel.
+- Automatische Elternzuordnungen ohne Scan werden in den Monatszahlen mitgezählt und separat gekennzeichnet; bei unbekannter Ausräumzeit gilt der Monat des Programmendes.
+- Einstellungen und Versionsnummer nur für Vera/Manuel sichtbar; kein allgemeiner Admin-Zugriff auf die Einstellungsansicht.
+- Bestehende NFC-Automation bleibt unverändert.
+
 ## 0.2.2
 
 - Importierbare NFC-Automation: Scan speichert das Ausräumen sofort, ohne Dialog oder Push-Rückfrage.

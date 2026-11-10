@@ -1,5 +1,5 @@
-/* Spülmaschine Verlauf 0.2.1 — local, read-only dashboard card. */
-const SV_VERSION = '0.2.1';
+/* Spülmaschine Verlauf 0.3.0 — local, read-only dashboard card. */
+const SV_VERSION = '0.3.0';
 const svEscape = value => String(value ?? '').replace(/[&<>"']/g,
   char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const svDate = (value, hass, date = true) => {
@@ -18,7 +18,18 @@ const svDuration = value => {
   const minutes = Math.max(0, Math.round(Number(value)));
   return minutes >= 60 ? `${Math.floor(minutes/60)} Std. ${minutes%60} Min.` : `${minutes} Min.`;
 };
+const svZone = hass => hass?.locale?.time_zone === 'local' ? undefined : hass?.config?.time_zone;
+const svMonth = (value, hass) => {
+  const date = new Date(value);
+  if (!value || !Number.isFinite(date.getTime())) return 'unknown';
+  const parts = new Intl.DateTimeFormat('en-CA', {year:'numeric',month:'2-digit',timeZone:svZone(hass)}).formatToParts(date);
+  return `${parts.find(p=>p.type==='year').value}-${parts.find(p=>p.type==='month').value}`;
+};
+const svMonthTitle = key => /^\d{4}-\d{2}$/.test(key)
+  ? new Intl.DateTimeFormat('de-DE',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${key}-01T12:00:00Z`)) : 'Monat unbekannt';
 const SV_STYLE = `
+.version{border-top:1px solid var(--sv-line);padding-top:12px;text-align:right;font-size:11px;color:var(--sv-muted)}.settings-button{border:0;background:transparent;color:var(--sv-muted);cursor:pointer;padding:8px;border-radius:8px;display:flex;align-items:center}.settings-button[aria-pressed="true"]{color:var(--sv-accent);background:var(--secondary-background-color,#f5f5f5)}.month{margin-left:8px}.statistics{padding:16px 0}.statistics h3{margin:0 0 14px;font-size:16px}.statistics table{width:100%;border-collapse:collapse;font-size:13px}.statistics th,.statistics td{padding:9px 0;border-bottom:1px solid var(--sv-line);text-align:left}.statistics td:last-child,.statistics th:last-child{text-align:right}.stat-month{margin-top:12px}.stat-total{font-weight:600}.statistics .hint{margin-top:12px}
+
 .history-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}.history-row .entry-title{min-width:0}.history-row .entry-sub{text-align:right;flex-shrink:0}
 :host{display:block;color:var(--primary-text-color,#212121);font-family:var(--ha-font-family-body,Roboto,Arial,sans-serif);font-size:14px;--sv-accent:var(--primary-color,#03a9f4);--sv-muted:var(--secondary-text-color,#727272);--sv-line:var(--divider-color,#e0e0e0);--sv-bg:var(--ha-card-background,var(--card-background-color,#fff))}
 *{box-sizing:border-box}ha-card{display:block;background:var(--sv-bg);border:var(--ha-card-border-width,1px) solid var(--ha-card-border-color,var(--sv-line));border-radius:var(--ha-card-border-radius,12px);box-shadow:var(--ha-card-box-shadow,none);overflow:hidden}
@@ -31,23 +42,52 @@ details{border-top:1px solid var(--sv-line)}summary{list-style:none;cursor:point
 const SV_CHEVRON = '<svg class="chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 class SpuelmaschineVerlaufCard extends HTMLElement {
-  constructor() { super(); this.attachShadow({mode:'open'}); this._signature = ''; }
+  constructor() { super(); this.attachShadow({mode:'open'}); this._signature = ''; this._settings = false; this._folds = new Map();
+    this.shadowRoot.addEventListener('click', e => {
+      if (e.target.closest?.('.settings-button') && this._canSettings()) { this._rememberFolds(); this._settings = !this._settings; this._signature = ''; this._render(); }
+    });
+  }
   setConfig(config) {
     this._config = {entity:'sensor.spulmaschine_verlauf', duty_entity:'input_select.spuelmaschine_dienst', title:'Spülmaschine', history_open:false, max_entries:30, ...config};
     if (!Number.isInteger(this._config.max_entries) || this._config.max_entries < 1 || this._config.max_entries > 30)
       throw new Error('max_entries muss eine ganze Zahl zwischen 1 und 30 sein.');
+    if (this._config.settings_users !== undefined && (!Array.isArray(this._config.settings_users) || this._config.settings_users.some(id=>typeof id !== 'string' || !id.trim())))
+      throw new Error('settings_users muss eine Liste von Home-Assistant-Benutzer-IDs sein.');
     this._signature = ''; this._render();
   }
   set hass(hass) { this._hass = hass; this._render(); }
   getCardSize() { return 4; }
   static getStubConfig() { return {entity:'sensor.spulmaschine_verlauf',duty_entity:'input_select.spuelmaschine_dienst'}; }
   _entry(row) {
-    const person = ['Vera', 'Manuel', 'Vera/Manuel', 'Vera & Manuel'].includes(row.emptied_by) ? 'Vera & Manuel' : row.emptied_by;
+    const person = ['Vera', 'Manuel', 'Vera/Manuel', 'Vera & Manuel', 'Vera / Manuel'].includes(row.emptied_by) ? 'Vera / Manuel' : row.emptied_by;
     const time = row.emptied_at ? svDate(row.emptied_at,this._hass) : 'Zeitpunkt unbekannt';
     return `<div class="entry history-row" data-cycle="${svEscape(row.id)}"><span class="entry-title">${svEscape(person)}</span><span class="entry-sub">${svEscape(time)}</span></div>`;
   }
+  _canSettings() {
+    const user = this._hass?.user;
+    if (!user) return false;
+    // Explicit HA account IDs take precedence. Admin status alone grants no access.
+    if (Array.isArray(this._config.settings_users)) return this._config.settings_users.includes(user.id);
+    const firstName = String(user.name || '').trim().split(/\s+/)[0].toLocaleLowerCase('de-DE');
+    return ['vera', 'manuel'].includes(firstName);
+  }
+  _rememberFolds() {
+    this.shadowRoot.querySelectorAll('details[data-fold]').forEach(el=>this._folds.set(el.dataset.fold, el.open));
+  }
+  _history(visible, unavailable) {
+    const groups = new Map();
+    visible.forEach(row=>{ const month = svMonth(row.emptied_at || row.finished_at,this._hass); if (!groups.has(month)) groups.set(month,[]); groups.get(month).push(row); });
+    const months = [...groups.keys()].sort().reverse();
+    return `<details class="history" data-fold="history" ${(this._folds.get('history') ?? this._config.history_open) ? 'open' : ''}><summary><span class="fold-title">Verlauf</span><span class="count">${unavailable ? '—' : visible.length} Einträge</span>${SV_CHEVRON}</summary>
+      ${unavailable ? '<div class="empty">Der Verlauf kann derzeit nicht angezeigt werden.</div>' : months.length ? months.map(key=>`<details class="month" data-fold="${svEscape(key)}" ${this._folds.get(key) ? 'open' : ''}><summary><span class="fold-title">${svEscape(svMonthTitle(key))}</span><span class="count">${groups.get(key).length}</span>${SV_CHEVRON}</summary>${groups.get(key).map(row=>this._entry(row)).join('')}</details>`).join('') : '<div class="empty">Noch kein Ausräumen gespeichert.</div>'}
+      </details>`;
+  }
+  _statistics(stats, unavailable) {
+    return `<section class="statistics"><h3>Statistik</h3>${unavailable ? '<div class="empty">Statistik nicht verfügbar.</div>' : !Array.isArray(stats) ? '<div class="empty">Statistik noch nicht verfügbar. Integration aktualisieren und Home Assistant neu starten.</div>' : !stats.length ? '<div class="empty">Noch kein Ausräumen gespeichert.</div>' : stats.map(month=>`<details class="stat-month" data-fold="stat-${svEscape(month.month)}" ${this._folds.get('stat-'+month.month) ? 'open' : ''}><summary><span class="fold-title">${svEscape(svMonthTitle(month.month))}</span><span class="count">Gesamt: ${svEscape(month.total)}</span>${SV_CHEVRON}</summary><table aria-label="${svEscape(svMonthTitle(month.month))}"><thead><tr><th>Benutzer</th><th>Anzahl</th></tr></thead><tbody>${['Maximilian','Paul','Vera / Manuel'].map(person=>`<tr><td>${person}</td><td>${svEscape(month.people?.[person] ?? 0)}</td></tr>`).join('')}<tr class="stat-total"><td>Gesamt</td><td>${svEscape(month.total)}</td></tr></tbody></table>${month.assumed ? `<p class="hint">Davon ${svEscape(month.assumed)} automatisch Vera / Manuel zugeordnet, ohne Scan. Bei unbekannter Ausräumzeit zählt der Monat des Programmendes.</p>` : ''}</details>`).join('')}<p class="hint">Alle gespeicherten Ausräumvorgänge, auch ältere als die letzten 30 Spülgänge. Offene Spülgänge zählen nicht.</p><div class="version">Version ${SV_VERSION}</div></section>`;
+  }
   _render() {
     if (!this._config || !this._hass) return;
+    if (!this._canSettings()) this._settings = false;
     const history = this._hass.states[this._config.entity];
     const duty = this._hass.states[this._config.duty_entity];
     const unavailable = !history || ['unknown','unavailable'].includes(history.state);
@@ -56,18 +96,16 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
     const rows = Array.isArray(attributes.eintraege) ? attributes.eintraege : [];
     const openId = attributes.offener_spuelgang;
     const current = rows.find(row => row.id === openId);
-    const signature = JSON.stringify([this._config,unavailable,history?.state,rows,openId,dutyValue,this._hass.locale,this._hass.config?.time_zone]);
+    const signature = JSON.stringify([this._config,unavailable,history?.state,rows,attributes.statistik,this._settings,this._canSettings(),this._hass.user?.id,openId,dutyValue,this._hass.locale,this._hass.config?.time_zone]);
     if (this._signature === signature) return;
     this._signature = signature;
-    const fold = this.shadowRoot.querySelector('details.history');
-    const historyOpen = fold ? fold.open : Boolean(this._config.history_open);
+    this._rememberFolds();
     const visible = rows.filter(row => row.emptied_by && row.status !== 'offen').slice(0,this._config.max_entries);
     this.shadowRoot.innerHTML = `<style>${SV_STYLE}</style><ha-card>
-      <div class="header"><ha-icon icon="mdi:dishwasher" aria-hidden="true"></ha-icon><span class="title">${svEscape(this._config.title)}</span></div>
-      <div class="content"><div class="assignment"><span class="label">Als Nächstes</span><strong class="person">${svEscape(dutyValue)}</strong></div>
+      <div class="header"><ha-icon icon="mdi:dishwasher" aria-hidden="true"></ha-icon><span class="title">${svEscape(this._config.title)}</span>${this._canSettings() ? `<button class="settings-button" aria-label="${this._settings ? 'Zurück zur Spülmaschine' : 'Einstellungen'}" title="Einstellungen" aria-pressed="${this._settings}"><ha-icon icon="mdi:cog"></ha-icon></button>` : ''}</div>
+      <div class="content">${this._settings ? this._statistics(attributes.statistik, unavailable) : `<div class="assignment"><span class="label">Als Nächstes</span><strong class="person">${svEscape(dutyValue)}</strong></div>
       ${unavailable ? `<div class="warning">Verlaufssensor nicht verfügbar. Entität und Leseberechtigung prüfen: ${svEscape(this._config.entity)}</div>` : openId ? `<div class="notice waiting"><strong>${svEscape(current?.assigned_to || dutyValue)} ist mit dem Ausräumen dran.</strong>${current ? `<small>Fertig seit ${svEscape(svDate(current.finished_at,this._hass))}${current.observed_after_restart ? ' ≈' : ''}</small>` : ''}<small>Nach dem Ausräumen den NFC-Tag scannen.</small></div>` : '<div class="notice">Aktuell kein Ausräumen offen.</div>'}
-      <details class="history" ${historyOpen ? 'open' : ''}><summary><span class="fold-title">Verlauf</span><span class="count">${svEscape(unavailable ? '—' : visible.length)} Einträge</span>${SV_CHEVRON}</summary>
-      ${unavailable ? '<div class="empty">Der Verlauf kann derzeit nicht angezeigt werden.</div>' : visible.length ? visible.map(row => this._entry(row)).join('') : '<div class="empty">Noch kein Ausräumen gespeichert.</div>'}</details>
+      ${this._history(visible, unavailable)}`}
       </div></ha-card>`;
   }
 }

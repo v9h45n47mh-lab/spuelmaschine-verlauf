@@ -22,7 +22,7 @@ async def async_setup(hass, config):
     await hass.http.async_register_static_paths([StaticPathConfig(
         '/spuelmaschine-verlauf/card.js',
         str(Path(__file__).parent / 'card.js'), False)])
-    frontend.add_extra_js_url(hass, '/spuelmaschine-verlauf/card.js?v=0.2.1')
+    frontend.add_extra_js_url(hass, '/spuelmaschine-verlauf/card.js?v=0.3.0')
     async def service(call):
         manager = hass.data.get(DOMAIN)
         if manager is None:
@@ -97,7 +97,7 @@ class Manager:
         return value
 
     async def refresh(self):
-        self.snapshot = await self.hass.async_add_executor_job(self.repo.report)
+        self.snapshot = await self.hass.async_add_executor_job(self.repo.report, 30, 0, self.hass.config.time_zone)
         async_dispatcher_send(self.hass, SIGNAL)
 
     async def observe(self, state):
@@ -139,4 +139,4 @@ class Manager:
 
     async def report(self, limit, offset):
         async with self.lock:
-            return await self.hass.async_add_executor_job(self.repo.report, limit, offset)
+            return await self.hass.async_add_executor_job(self.repo.report, limit, offset, self.hass.config.time_zone)

@@ -143,6 +143,40 @@ class HistoryTests(unittest.TestCase):
         self.assertEqual(len(page['entries']), 30)
         self.assertEqual(len(self.repo.report(30, 30)['entries']), 15)
 
+    def test_monthly_statistics_include_all_records_and_merge_parents(self):
+        for i in range(36):
+            cycle, _ = self.repo.record_finished('Paul', str(i))
+            person = ['Paul', 'Vera', 'Manuel'][i % 3]
+            self.repo.record_emptied(cycle['id'], person)
+        report = self.repo.report(1)
+        self.assertEqual(len(report['entries']), 1)
+        stats = report['statistics'][0]
+        self.assertEqual(stats['total'], 36)
+        self.assertEqual(stats['people'], {'Paul': 12, 'Maximilian': 0, 'Vera / Manuel': 24})
+        self.assertEqual(stats['assumed'], 0)
+
+    def test_statistics_month_uses_local_emptying_time_and_keeps_year(self):
+        for key, stamp in [('one', '2025-12-31T23:30:00+00:00'), ('two', '2026-12-31T23:30:00+00:00')]:
+            cycle, _ = self.repo.record_finished('Paul', key)
+            self.repo.record_emptied(cycle['id'], 'Paul')
+            with self.repo.connect() as db:
+                db.execute('UPDATE cycles SET emptied_at=? WHERE id=?', (stamp, cycle['id']))
+        stats = self.repo.report(30, 0, 'Europe/Berlin')['statistics']
+        self.assertEqual([m['month'] for m in stats], ['2027-01', '2026-01'])
+        self.assertTrue(all(m['total'] == 1 for m in stats))
+
+    def test_statistics_flag_assumed_and_exclude_open_cycle(self):
+        old, _ = self.repo.record_finished('Paul', 'old')
+        with self.repo.connect() as db:
+            db.execute('UPDATE cycles SET finished_at=? WHERE id=?', ('2026-10-12T10:00:00+00:00', old['id']))
+        self.repo.record_finished('Paul', 'new')
+        stats = self.repo.report()['statistics']
+        self.assertEqual(len(stats), 1)
+        self.assertEqual(stats[0]['month'], '2026-10')
+        self.assertEqual(stats[0]['total'], 1)
+        self.assertEqual(stats[0]['assumed'], 1)
+        self.assertEqual(stats[0]['people']['Vera / Manuel'], 1)
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,6 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 PEOPLE = {"Maximilian", "Paul", "Vera", "Manuel"}
 CHILDREN = {"Maximilian", "Paul"}
@@ -98,7 +99,7 @@ class Repository:
                        (stamp, person, stamp, cycle_id))
             return dict(db.execute('SELECT * FROM cycles WHERE id=?', (cycle_id,)).fetchone()), True
 
-    def report(self, limit=30, offset=0):
+    def report(self, limit=30, offset=0, time_zone="UTC"):
         with self.connect() as db:
             rows = [dict(row) for row in db.execute(
                 'SELECT * FROM cycles ORDER BY finished_at DESC, rowid DESC LIMIT ? OFFSET ?', (limit, offset))]
@@ -112,4 +113,31 @@ class Repository:
                 'total': db.execute('SELECT COUNT(*) FROM cycles').fetchone()[0],
                 'open_id': next((r['id'] for r in db.execute("SELECT id FROM cycles WHERE status='offen'")), None),
                 'entries': rows,
+                'statistics': self._statistics(db, time_zone),
             }
+
+    @staticmethod
+    def _statistics(db, time_zone):
+        zone = ZoneInfo(time_zone)
+        def month_key(value):
+            stamp = datetime.fromisoformat(value)
+            if stamp.tzinfo is None:
+                stamp = stamp.replace(tzinfo=timezone.utc)
+            return stamp.astimezone(zone).strftime('%Y-%m')
+        db.create_function('month_key', 1, month_key)
+        months = {}
+        for row in db.execute("""SELECT
+                month_key(COALESCE(emptied_at, finished_at)) AS month,
+                CASE WHEN emptied_by IN ('Vera','Manuel','Vera/Manuel','Vera & Manuel','Vera / Manuel')
+                     THEN 'Vera / Manuel' ELSE emptied_by END AS person,
+                COUNT(*) AS count,
+                SUM(CASE WHEN emptied_at IS NULL THEN 1 ELSE 0 END) AS assumed
+            FROM cycles WHERE status IN ('erledigt','nicht_bestaetigt') AND emptied_by IS NOT NULL
+            GROUP BY month, person ORDER BY month DESC"""):
+            month = months.setdefault(row['month'], {
+                'month': row['month'], 'total': 0, 'assumed': 0,
+                'people': {'Maximilian': 0, 'Paul': 0, 'Vera / Manuel': 0}})
+            month['people'][row['person']] = row['count']
+            month['total'] += row['count']
+            month['assumed'] += row['assumed']
+        return list(months.values())

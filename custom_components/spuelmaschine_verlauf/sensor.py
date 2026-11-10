@@ -25,7 +25,7 @@ class HistorySensor(SensorEntity):
     def extra_state_attributes(self):
         report = self.manager.snapshot
         return {'offener_spuelgang': report['open_id'], 'eintraege': report['entries'],
-                'anzeige_limit': 30, 'speicherung': 'SQLite, unabhängig vom Recorder'}
+                'statistik': report.get('statistics', []), 'anzeige_limit': 30, 'speicherung': 'SQLite, unabhängig vom Recorder'}
 
     async def async_added_to_hass(self):
         self.async_on_remove(async_dispatcher_connect(self.hass, SIGNAL, self.async_write_ha_state))
