@@ -1,4 +1,4 @@
-import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI, statisticsTable, counter} from './family-ui/1.2.0/family-ui.js';
+import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI, statisticsTable, counter} from './family-ui/1.2.1/family-ui.js';
 /* Spülmaschine Verlauf 0.4.3 — local, read-only dashboard card. */
 const SV_VERSION = '0.4.3';
 const svEscape=escapeHtml;
