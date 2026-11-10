@@ -4,7 +4,7 @@
 
 Home-Assistant-Integration zum lokalen Speichern von Programmenden und Ausräumbestätigungen.
 
-Version **0.3.2** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
+Version **0.4.0** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
 
 ## Installation
 
@@ -100,3 +100,7 @@ Die Integration enthält jetzt ein eigenes transparentes Spülmaschinen-Logo mit
 Die Bereitstellung folgt der [HA-Dokumentation zu Markenbildern](https://contributors.home-assistant.io/core/integrations/brands/) und der [Marketplace-Anleitung](https://contributors.home-assistant.io/marketplace/guides/integrations/). Das Bild wurde mit dem integrierten Bildgenerator erstellt und für die beiden vorgegebenen Auflösungen exportiert.
 
 Update über Marketplace installieren, HA neu starten und Dashboard/Companion-App neu laden. Dashboard-YAML, Datenbank und NFC-Automation bleiben gültig. 23 Logiktests und Frontend-DOM-Prüfungen erfolgreich, einschließlich Gesamtsummen über mehrere Monate. Live-Anzeige im Marketplace und HA bleibt vor Ort zu prüfen.
+
+## Gemeinsame Oberfläche ab 0.4.0
+
+Die Karte verwendet HA UI Kit **1.0.0**, fest mitgeliefert unter `frontend/family-ui/1.0.0/`. Navigation, Einstellungen, Klappbereiche, Symbole, Schrift, Farben und Abstände stammen aus dem gemeinsamen Modul. Die Versionszeile steht weiterhin nur in den Einstellungen für Vera/Manuel. Keine Zusatzinstallation, keine externen Laufzeitaufrufe. Bestehende Dashboard-YAML, Daten und Berechtigungen bleiben gültig. Nach dem Marketplace-Update HA neu starten und Dashboard/App neu laden.

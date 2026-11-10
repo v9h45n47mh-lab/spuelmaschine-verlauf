@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict'),{readFileSync}=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const {parseHTML}=require('linkedom');const {window}=parseHTML('<html><body></body></html>');
 Object.defineProperty(window.HTMLElement.prototype,'open',{get(){return this.hasAttribute('open')},set(v){v?this.setAttribute('open',''):this.removeAttribute('open')}});
-vm.runInNewContext(readFileSync(path.join(__dirname,'../custom_components/spuelmaschine_verlauf/card.js'),'utf8'),{window,HTMLElement:window.HTMLElement,customElements:window.customElements,Intl,Date,Set,Number,JSON,String});
+vm.runInNewContext(require('./card_source.cjs')(),{window,HTMLElement:window.HTMLElement,customElements:window.customElements,Intl,Date,Set,Number,JSON,String});
 const C=window.customElements.get('spuelmaschine-verlauf-card'),card=new C();card.setConfig({});
 const rows=['Vera','Manuel','Vera/Manuel','Paul'].map((person,i)=>({id:String(i),emptied_by:person,status:i===2?'nicht_bestaetigt':'erledigt',emptied_at:i===2?null:'2026-11-10T12:00:00Z',finished_at:'2026-11-10T10:00:00Z'}));rows.push({id:'open',status:'offen',assigned_to:'Maximilian'});
 const h={user:{id:'vera-account',name:'Vera'},locale:{language:'de-DE'},config:{time_zone:'Europe/Berlin'},states:{'sensor.spulmaschine_verlauf':{state:'5',attributes:{eintraege:rows,offener_spuelgang:'open'}},'input_select.spuelmaschine_dienst':{state:'Maximilian'}}};card.hass=h;
@@ -9,16 +9,16 @@ assert.equal(card.shadowRoot.querySelectorAll('.status,.footer').length,0);asser
 assert.equal([...card.shadowRoot.querySelectorAll('.history-row .entry-title')].filter(el=>el.textContent==='Vera / Manuel').length,3);
 assert.match(card.shadowRoot.querySelector('[data-cycle="2"]').textContent,/Zeitpunkt unbekannt/);assert.match(card.shadowRoot.querySelector('[data-cycle="0"]').textContent,/13:00/);
 assert.equal(card.shadowRoot.querySelectorAll('.fields,.badge,[data-cycle="open"]').length,0);
-card.shadowRoot.querySelector('.history').open=true;h.states['input_select.spuelmaschine_dienst'].state='Paul';card.hass=h;assert.equal(card.shadowRoot.querySelector('.history').open,true);
+card.shadowRoot.querySelector('.history .settings-fold').click();h.states['input_select.spuelmaschine_dienst'].state='Paul';card.hass=h;assert.equal(card.shadowRoot.querySelector('.history .settings-fold').getAttribute('aria-expanded'),'true');
 rows[3].emptied_by='<img src=x>';card.hass=h;assert.equal(card.shadowRoot.querySelectorAll('img').length,0);
 // Monthly grouping keeps years distinct and preserves folding across refreshes.
-assert.equal(card.shadowRoot.querySelectorAll('details.month').length,1);
-assert.match(card.shadowRoot.querySelector('details.month summary').textContent,/November 2026/);
-card.shadowRoot.querySelector('details.month').open=true;
+assert.equal(card.shadowRoot.querySelectorAll('.month').length,1);
+assert.match(card.shadowRoot.querySelector('.month .settings-fold').textContent,/November 2026/);
+card.shadowRoot.querySelector('.month .settings-fold').click();
 rows.push({id:'old',status:'erledigt',emptied_by:'Maximilian',emptied_at:'2025-11-01T12:00:00Z'});
 card.hass=h;
-assert.equal(card.shadowRoot.querySelectorAll('details.month').length,2);
-assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"]').open,true);
+assert.equal(card.shadowRoot.querySelectorAll('.month').length,2);
+assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"] .settings-fold').getAttribute('aria-expanded'),'true');
 h.states['sensor.spulmaschine_verlauf'].attributes.statistik=[{month:'2026-11',total:80,assumed:2,people:{Maximilian:30,Paul:40,'Vera / Manuel':10}}, {month:'2026-10',total:20,assumed:1,people:{Maximilian:5,Paul:10,'Vera / Manuel':5}}];
 card.hass=h;
 card.shadowRoot.querySelector('.settings-button').click();
@@ -32,16 +32,16 @@ assert.match(card.shadowRoot.querySelector('table').textContent,/Maximilian35Pau
 
 h.states['input_select.spuelmaschine_dienst'].state='Maximilian';card.hass=h;
 
-card.shadowRoot.querySelector('.settings-button').click();
+card.shadowRoot.querySelector('[data-page="overview"]').click();
 assert.ok(card.shadowRoot.querySelector('.history'));
-assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"]').open,true);
-assert.equal(card.shadowRoot.querySelector('.version'),null);
+assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"] .settings-fold').getAttribute('aria-expanded'),'true');
+assert.equal(card.shadowRoot.querySelector('.version-info'),null);
 card.shadowRoot.querySelector('.settings-button').click();
-assert.equal(card.shadowRoot.querySelector('.version').textContent,'Version 0.3.2');
+assert.equal(card.shadowRoot.querySelector('.version-info').textContent,'Oberfläche 0.4.0 · UI 1.0.0');
 h.user={id:'paul-account',name:'Paul',is_admin:true};card.hass=h;
 assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
 assert.equal(card.shadowRoot.querySelector('.statistics'),null);
-assert.equal(card.shadowRoot.querySelector('.version'),null);
+assert.equal(card.shadowRoot.querySelector('.version-info'),null);
 h.user={id:'manuel-account',name:'Manuel Wagner'};card.hass=h;
 assert.ok(card.shadowRoot.querySelector('.settings-button'));
 card.setConfig({settings_users:['vera-account']});
@@ -53,5 +53,5 @@ assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
 card.setConfig({});
 h.user={id:'max-account',name:'Maximilian'};card.hass=h;
 assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
-delete h.states['sensor.spulmaschine_verlauf'];card.hass=h;assert.ok(card.shadowRoot.querySelector('.warning'));
+delete h.states['sensor.spulmaschine_verlauf'];card.hass=h;assert.ok(card.shadowRoot.querySelector('.error'));
 console.log('DOM checks passed: monthly groups, statistics settings, disclosure persistence, minimal history, unified parents, missing times, timezone, disclosure, unavailable sensor and escaping.');
