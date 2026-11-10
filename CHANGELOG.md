@@ -1,5 +1,12 @@
 # Änderungen
 
+## 0.3.1
+
+- Statistik als Gesamtübersicht je Benutzer über den vollständigen gespeicherten Zeitraum; keine Monatsunterteilung in den Einstellungen.
+- Monatsgruppen im Verlauf bleiben erhalten.
+- Eigenes transparentes Logo für Home Assistant und Marketplace im lokalen brand-Ordner (256/512 px).
+- Einstellungen und Versionsnummer weiterhin nur für Vera/Manuel sichtbar.
+
 ## 0.3.0
 
 - Verlauf nach Monat/Jahr gruppiert; jede Monatsgruppe lässt sich auf- und zuklappen.

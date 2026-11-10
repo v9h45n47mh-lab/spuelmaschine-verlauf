@@ -1,3 +1,7 @@
+# Update 0.3.1
+
+Gesamtstatistik ohne Monatsunterteilung und eigenes Marketplace-Logo: siehe [README.md](README.md#gesamtstatistik-und-logo-ab-031). Frühere Abschnitte dokumentieren ältere Versionen.
+
 # Update 0.3.0
 
 Monatsverlauf, Elternanzeige Vera / Manuel und Statistik in den nur für Vera/Manuel sichtbaren Einstellungen: siehe [README.md](README.md#monatsverlauf-und-statistik-ab-030). Keine Änderung der NFC-Automation erforderlich.

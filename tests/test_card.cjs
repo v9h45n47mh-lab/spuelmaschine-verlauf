@@ -19,23 +19,25 @@ rows.push({id:'old',status:'erledigt',emptied_by:'Maximilian',emptied_at:'2025-1
 card.hass=h;
 assert.equal(card.shadowRoot.querySelectorAll('details.month').length,2);
 assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"]').open,true);
-h.states['sensor.spulmaschine_verlauf'].attributes.statistik=[{month:'2026-11',total:80,assumed:2,people:{Maximilian:30,Paul:40,'Vera / Manuel':10}}];
+h.states['sensor.spulmaschine_verlauf'].attributes.statistik=[{month:'2026-11',total:80,assumed:2,people:{Maximilian:30,Paul:40,'Vera / Manuel':10}}, {month:'2026-10',total:20,assumed:1,people:{Maximilian:5,Paul:10,'Vera / Manuel':5}}];
 card.hass=h;
 card.shadowRoot.querySelector('.settings-button').click();
 assert.ok(card.shadowRoot.querySelector('.statistics'));
 assert.equal(card.shadowRoot.querySelectorAll('.history').length,0);
-assert.match(card.shadowRoot.querySelector("ha-card").textContent,/Gesamt: 80/);
+assert.match(card.shadowRoot.querySelector("ha-card").textContent,/Gesamt100/);
+assert.match(card.shadowRoot.querySelector("ha-card").textContent,/Davon 3 automatisch/);
+assert.equal(card.shadowRoot.querySelectorAll(".stat-month").length,0);
 assert.match(card.shadowRoot.querySelector("ha-card").textContent,/automatisch Vera \/ Manuel zugeordnet/);
-assert.match(card.shadowRoot.querySelector('table').textContent,/Maximilian30Paul40Vera \/ Manuel10Gesamt80/);
-card.shadowRoot.querySelector('.stat-month').open=true;
+assert.match(card.shadowRoot.querySelector('table').textContent,/Maximilian35Paul50Vera \/ Manuel15Gesamt100/);
+
 h.states['input_select.spuelmaschine_dienst'].state='Maximilian';card.hass=h;
-assert.equal(card.shadowRoot.querySelector('.stat-month').open,true);
+
 card.shadowRoot.querySelector('.settings-button').click();
 assert.ok(card.shadowRoot.querySelector('.history'));
 assert.equal(card.shadowRoot.querySelector('[data-fold="2026-11"]').open,true);
 assert.equal(card.shadowRoot.querySelector('.version'),null);
 card.shadowRoot.querySelector('.settings-button').click();
-assert.equal(card.shadowRoot.querySelector('.version').textContent,'Version 0.3.0');
+assert.equal(card.shadowRoot.querySelector('.version').textContent,'Version 0.3.1');
 h.user={id:'paul-account',name:'Paul',is_admin:true};card.hass=h;
 assert.equal(card.shadowRoot.querySelector('.settings-button'),null);
 assert.equal(card.shadowRoot.querySelector('.statistics'),null);

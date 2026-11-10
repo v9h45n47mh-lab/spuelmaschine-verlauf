@@ -1,5 +1,5 @@
-/* Spülmaschine Verlauf 0.3.0 — local, read-only dashboard card. */
-const SV_VERSION = '0.3.0';
+/* Spülmaschine Verlauf 0.3.1 — local, read-only dashboard card. */
+const SV_VERSION = '0.3.1';
 const svEscape = value => String(value ?? '').replace(/[&<>"']/g,
   char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const svDate = (value, hass, date = true) => {
@@ -83,7 +83,13 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
       </details>`;
   }
   _statistics(stats, unavailable) {
-    return `<section class="statistics"><h3>Statistik</h3>${unavailable ? '<div class="empty">Statistik nicht verfügbar.</div>' : !Array.isArray(stats) ? '<div class="empty">Statistik noch nicht verfügbar. Integration aktualisieren und Home Assistant neu starten.</div>' : !stats.length ? '<div class="empty">Noch kein Ausräumen gespeichert.</div>' : stats.map(month=>`<details class="stat-month" data-fold="stat-${svEscape(month.month)}" ${this._folds.get('stat-'+month.month) ? 'open' : ''}><summary><span class="fold-title">${svEscape(svMonthTitle(month.month))}</span><span class="count">Gesamt: ${svEscape(month.total)}</span>${SV_CHEVRON}</summary><table aria-label="${svEscape(svMonthTitle(month.month))}"><thead><tr><th>Benutzer</th><th>Anzahl</th></tr></thead><tbody>${['Maximilian','Paul','Vera / Manuel'].map(person=>`<tr><td>${person}</td><td>${svEscape(month.people?.[person] ?? 0)}</td></tr>`).join('')}<tr class="stat-total"><td>Gesamt</td><td>${svEscape(month.total)}</td></tr></tbody></table>${month.assumed ? `<p class="hint">Davon ${svEscape(month.assumed)} automatisch Vera / Manuel zugeordnet, ohne Scan. Bei unbekannter Ausräumzeit zählt der Monat des Programmendes.</p>` : ''}</details>`).join('')}<p class="hint">Alle gespeicherten Ausräumvorgänge, auch ältere als die letzten 30 Spülgänge. Offene Spülgänge zählen nicht.</p><div class="version">Version ${SV_VERSION}</div></section>`;
+    const total = {count:0,assumed:0,people:{'Maximilian':0,'Paul':0,'Vera / Manuel':0}};
+    if (Array.isArray(stats)) stats.forEach(month=>{
+      total.count += Number(month.total) || 0;
+      total.assumed += Number(month.assumed) || 0;
+      Object.keys(total.people).forEach(person=>{total.people[person] += Number(month.people?.[person]) || 0;});
+    });
+    return `<section class="statistics"><h3>Statistik</h3>${unavailable ? '<div class="empty">Statistik nicht verfügbar.</div>' : !Array.isArray(stats) ? '<div class="empty">Statistik noch nicht verfügbar. Integration aktualisieren und Home Assistant neu starten.</div>' : `<p class="hint">Gesamter gespeicherter Zeitraum</p><table aria-label="Gesamtstatistik"><thead><tr><th>Benutzer</th><th>Anzahl</th></tr></thead><tbody>${Object.keys(total.people).map(person=>`<tr><td>${person}</td><td>${svEscape(total.people[person])}</td></tr>`).join('')}<tr class="stat-total"><td>Gesamt</td><td>${svEscape(total.count)}</td></tr></tbody></table>${total.assumed ? `<p class="hint">Davon ${svEscape(total.assumed)} automatisch Vera / Manuel zugeordnet, ohne Scan.</p>` : ''}<p class="hint">Alle gespeicherten Ausräumvorgänge, auch ältere als die letzten 30 Spülgänge. Offene Spülgänge zählen nicht.</p>`}<div class="version">Version ${SV_VERSION}</div></section>`;
   }
   _render() {
     if (!this._config || !this._hass) return;

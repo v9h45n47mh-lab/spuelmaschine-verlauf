@@ -1,8 +1,10 @@
 # Spülmaschine Verlauf
 
+<img src="custom_components/spuelmaschine_verlauf/brand/icon.png" alt="Spülmaschine Verlauf" width="96" height="96">
+
 Home-Assistant-Integration zum lokalen Speichern von Programmenden und Ausräumbestätigungen.
 
-Version **0.3.0** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
+Version **0.3.1** enthält die Verlaufsspeicherung, Dashboard-Karte und eine importierbare NFC-Automation ohne Bestätigungsdialog. Pushnachrichten zum Programmende bleiben in der bestehenden HA-Automation.
 
 ## Installation
 
@@ -88,3 +90,13 @@ Eine ausdrücklich gesetzte Liste ersetzt die Namenserkennung; `settings_users: 
 Update über Marketplace/HACS installieren, Home Assistant neu starten und Dashboard/Companion-App neu laden. Das bestehende Dashboard-YAML bleibt gültig. NFC-Blaupause und Benachrichtigungsautomationen müssen für dieses Update nicht verändert werden.
 
 Validierung 0.3.0: 23 Tests einschließlich Monatsgrenzen in Europe/Berlin, Jahreswechsel, vollständiger Statistik, zusammengefassten Eltern und gekennzeichneten automatischen Zuordnungen. DOM-Prüfungen für Monatssortierung, Klappzustände, Einstellungsrechte und Versionsanzeige. Ein visueller Live-Test in HA steht aus.
+
+## Gesamtstatistik und Logo ab 0.3.1
+
+Die Statistik in den Einstellungen zeigt **eine Gesamtübersicht über den gesamten gespeicherten Zeitraum**, ohne Monatsunterteilung: Maximilian, Paul, Vera / Manuel und Gesamtanzahl. Automatische Elternzuordnungen ohne Scan bleiben mit ihrer Anzahl gekennzeichnet. Die Monatsgruppierung gilt weiterhin nur für den Verlauf. Einstellungen und Versionsnummer bleiben ausschließlich für Vera/Manuel sichtbar.
+
+Die Integration enthält jetzt ein eigenes transparentes Spülmaschinen-Logo mit Erledigt-Häkchen unter `custom_components/spuelmaschine_verlauf/brand/icon.png` (256 × 256) und `icon@2x.png` (512 × 512). Home Assistant und der aktuelle Marketplace unterstützen diese lokalen Markenbilder. Anzeige nach dem Update und Neustart prüfen; zwischengespeicherte Marketplace-Bilder können verzögert aktualisiert werden. Für ältere HACS-Versionen kann die Darstellung abweichen.
+
+Die Bereitstellung folgt der [HA-Dokumentation zu Markenbildern](https://contributors.home-assistant.io/core/integrations/brands/) und der [Marketplace-Anleitung](https://contributors.home-assistant.io/marketplace/guides/integrations/). Das Bild wurde mit dem integrierten Bildgenerator erstellt und für die beiden vorgegebenen Auflösungen exportiert.
+
+Update über Marketplace installieren, HA neu starten und Dashboard/Companion-App neu laden. Dashboard-YAML, Datenbank und NFC-Automation bleiben gültig. 23 Logiktests und Frontend-DOM-Prüfungen erfolgreich, einschließlich Gesamtsummen über mehrere Monate. Live-Anzeige im Marketplace und HA bleibt vor Ort zu prüfen.
