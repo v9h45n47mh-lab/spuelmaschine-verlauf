@@ -2,8 +2,8 @@ blueprint:
   name: Spülmaschine – NFC direkt ausräumen
   description: >-
     Ein berechtigter Scan speichert das Ausräumen sofort, ohne Rückfrage.
-    Vera und Manuel dürfen jeden offenen Spülgang abschließen; Maximilian und
-    Paul nur ihren eigenen Dienst. Nur nach einem Kinder-Scan wechselt der Dienst.
+    Family Access entscheidet je Rolle, ob nur der eigene Dienst oder jeder
+    offene Spülgang bestätigt werden darf. Ohne Family Access gilt die bisherige Familienregel. Nur nach einem Kinder-Scan wechselt der Dienst.
     Ersetzt die bisherige NFC-Automation vollständig. Benötigt Spülmaschine Verlauf.
   domain: automation
   source_url: https://github.com/v9h45n47mh-lab/spuelmaschine-verlauf/blob/main/blueprints/automation/spuelmaschine_nfc.yaml
@@ -75,13 +75,13 @@ actions:
     value_template: >-
       {% set entries = state_attr(history_entity, 'eintraege') or [] %}
       {% set cycle = entries | selectattr('id', 'eq', cycle_id) | list %}
-      {{ cycle | count == 1 and cycle[0].status == 'offen'
-         and (person in ['Vera', 'Manuel']
-              or (person == states(duty_entity) and person == cycle[0].assigned_to)) }}
+      {{ cycle | count == 1 and cycle[0].status == 'offen' }}
   - action: spuelmaschine_verlauf.record_emptied
     data:
       cycle_id: "{{ cycle_id }}"
       person: "{{ person }}"
+      actor_user_id: >-
+        {{ trigger.event.context.user_id or '' }}
     response_variable: result
   - if:
       - condition: template

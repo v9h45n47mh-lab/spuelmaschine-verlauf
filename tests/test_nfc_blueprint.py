@@ -6,6 +6,9 @@ This is not a replacement for a live Home Assistant automation test.
 from pathlib import Path
 import tempfile
 import ast
+import asyncio
+import importlib.util
+from types import SimpleNamespace as NS
 import unittest
 import yaml
 from jinja2.nativetypes import NativeEnvironment
@@ -34,6 +37,18 @@ class NfcTests(unittest.TestCase):
         self.env.globals['states'] = lambda entity: self.duty
         self.env.globals['state_attr'] = self.attr
         self.switches = 0
+        users = {name.lower(): NS(id=name.lower(), name=name, is_admin=False, is_active=True, system_generated=False) for name in ['Manuel','Vera','Maximilian','Paul']}
+        async def get_user(uid): return users.get(uid)
+        async def get_users(): return list(users.values())
+        self.users=users
+        self.hass=NS(data={},auth=NS(async_get_user=get_user,async_get_users=get_users))
+        spec=importlib.util.spec_from_file_location('permission_client',Path(__file__).resolve().parents[1]/'custom_components/spuelmaschine_verlauf/family_access.py')
+        client=importlib.util.module_from_spec(spec);spec.loader.exec_module(client)
+        source=ast.parse((Path(__file__).resolve().parents[1]/'custom_components/spuelmaschine_verlauf/__init__.py').read_text())
+        helper=next(n for n in source.body if isinstance(n,ast.AsyncFunctionDef) and n.name=='authorize_empty')
+        ns={'allows':client.allows,'DOMAIN':'spuelmaschine_verlauf','PEOPLE':set(users[n].name for n in users),'ServiceValidationError':ValueError}
+        exec(compile(ast.Module(body=[helper],type_ignores=[]),'<shipped actor check>','exec'),ns)
+        self.authorize=ns['authorize_empty']
 
     def attr(self, entity, attr):
         report = self.repo.report()
@@ -50,14 +65,18 @@ class NfcTests(unittest.TestCase):
     def scan(self, device):
         steps = BLUEPRINT['actions']
         ctx = dict(self.devices, history_entity='sensor.history', duty_entity='input_select.duty',
-                   trigger={'event': {'data': {'device_id': device}}})
+                   trigger={'event': {'data': {'device_id': device}, 'context': {'user_id': None}}})
         for name, template in steps[1]['variables'].items():
             ctx[name] = self.render(template, ctx)
         for step in steps[2:4]:
             if not self.render(step['value_template'], ctx):
                 return False
         data = {key: self.render(value, ctx) for key, value in steps[4]['data'].items()}
-        _, changed = self.repo.record_emptied(**data)
+        try:
+            override=asyncio.run(self.authorize(self.hass,None,data.pop('actor_user_id') or None,data['person']))
+            if not override and self.duty!=data['person']:return False
+            _, changed = self.repo.record_emptied(**data,override_duty=override)
+        except ValueError:return False
         ctx['result'] = {'changed': changed}
         if self.render(steps[5]['if'][0]['value_template'], ctx):
             self.duty = self.render(steps[5]['then'][0]['data']['option'], ctx)
@@ -113,6 +132,30 @@ class NfcTests(unittest.TestCase):
         self.devices['vera_device'] = 'paul-phone'
         self.assertFalse(self.scan('paul-phone'))
         self.assertIsNotNone(self.repo.report()['open_id'])
+
+    def test_central_role_override_and_revocation(self):
+        grants={'confirm_own':True}
+        self.hass.data['family_access_manager']=NS(application_protocol=1,application_permissions=lambda user,app:dict(grants))
+        self.repo.record_finished('Paul','one')
+        self.assertFalse(self.scan('max-phone'))
+        grants['confirm_any']=True
+        self.assertTrue(self.scan('max-phone'))
+        self.repo.record_finished('Paul','two')
+        grants.clear()
+        self.assertFalse(self.scan('paul-phone'))
+        self.assertFalse(self.scan('vera-phone'))
+
+    def test_device_identity_supports_unique_full_account_names(self):
+        self.users['paul'].name='Paul Wagner'
+        self.repo.record_finished('Paul','one')
+        self.assertTrue(self.scan('paul-phone'))
+
+    def test_authenticated_person_cannot_be_forged(self):
+        with self.assertRaises(ValueError):
+            asyncio.run(self.authorize(self.hass,'paul','vera','Vera'))
+        self.users['paul'].is_active=False
+        with self.assertRaises(ValueError):
+            asyncio.run(self.authorize(self.hass,'paul',None,'Paul'))
 
     def test_queue_reads_variables_in_actions_without_wait_or_notify(self):
         self.assertEqual(BLUEPRINT['mode'], 'queued')
