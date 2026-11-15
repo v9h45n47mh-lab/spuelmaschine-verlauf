@@ -1,6 +1,19 @@
 import {UI_CSS, UI_VERSION, navigation, section, row, notice, versionInfo, escapeHtml, bindUI, statisticsTable, counter} from './family-ui/1.2.1/family-ui.js';
-/* Spülmaschine Verlauf 0.4.3 — local, read-only dashboard card. */
-const SV_VERSION = '0.4.3';
+function observeFamilyAccess(host, application, changed) {
+  const hass=host._hass,uid=hass?.user?.id;
+  if(!uid||typeof hass.callWS!=='function')return;
+  if(host._familyAccessUser!==uid){host._familyAccessUnsub?.();host._familyAccessUser=uid;host._familyAccessWatching=false;host._familyAccessEpoch=(host._familyAccessEpoch||0)+1;host._familyAccess=null;}
+  if(host._familyAccessWatching||Date.now()<(host._familyAccessRetry||0))return;
+  host._familyAccessWatching=true;
+  const epoch=host._familyAccessEpoch;
+  const accept=result=>{if(epoch!==host._familyAccessEpoch)return;host._familyAccess=result.permissions||{};changed?.();};
+  const request=hass.connection?.subscribeMessage?hass.connection.subscribeMessage(accept,{type:'family_access/subscribe',application}):hass.callWS({type:'family_access/application_permissions',application}).then(accept);
+  Promise.resolve(request).then(unsub=>{if(typeof unsub==='function'){if(epoch===host._familyAccessEpoch)host._familyAccessUnsub=unsub;else unsub();}}).catch(()=>{if(epoch===host._familyAccessEpoch){host._familyAccess={};host._familyAccessWatching=false;host._familyAccessRetry=Date.now()+10000;changed?.();}});
+}
+function releaseFamilyAccess(host){host._familyAccessUnsub?.();host._familyAccessUnsub=null;host._familyAccessWatching=false;host._familyAccessEpoch=(host._familyAccessEpoch||0)+1;}
+
+/* Spülmaschine Verlauf 0.5.0 — local, read-only dashboard card. */
+const SV_VERSION = '0.5.0';
 const svEscape=escapeHtml;
 const svDate = (value, hass, date = true) => {
   if (!value) return '—';
@@ -33,7 +46,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
   constructor(){super();this.attachShadow({mode:'open'});this._signature='';this._settings=false;this._folds=new Map();this._bindUI();}
   _bindUI(){this._unbindUI ||= bindUI(this.shadowRoot,({action,data})=>{if(action==='navigate'&&(data.page!=='settings'||this._canSettings())){this._rememberFolds();this._settings=data.page==='settings';this._signature='';this._render();}});}
   connectedCallback(){this._bindUI();}
-  disconnectedCallback(){this._unbindUI?.();this._unbindUI=null;}
+  disconnectedCallback(){releaseFamilyAccess(this);this._unbindUI?.();this._unbindUI=null;}
   setConfig(config) {
     this._config = {entity:'sensor.spulmaschine_verlauf', duty_entity:'input_select.spuelmaschine_dienst', title:'Spülmaschine', history_open:false, max_entries:30, ...config};
     if (!Number.isInteger(this._config.max_entries) || this._config.max_entries < 1 || this._config.max_entries > 30)
@@ -42,7 +55,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
       throw new Error('settings_users muss eine Liste von Home-Assistant-Benutzer-IDs sein.');
     this._signature = ''; this._render();
   }
-  set hass(hass) { this._hass = hass; this._render(); }
+  set hass(hass) { this._hass = hass;observeFamilyAccess(this,'spuelmaschine_verlauf',()=>{this._signature='';this._render();}); this._render(); }
   getCardSize() { return 4; }
   static getStubConfig() { return {entity:'sensor.spulmaschine_verlauf',duty_entity:'input_select.spuelmaschine_dienst'}; }
   _entry(entry) {
@@ -53,10 +66,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
   _canSettings() {
     const user = this._hass?.user;
     if (!user) return false;
-    // Explicit HA account IDs take precedence. Admin status alone grants no access.
-    if (Array.isArray(this._config.settings_users)) return this._config.settings_users.includes(user.id);
-    const firstName = String(user.name || '').trim().split(/\s+/)[0].toLocaleLowerCase('de-DE');
-    return ['vera', 'manuel'].includes(firstName);
+    return Boolean(user.is_admin || this._familyAccess?.statistics);
   }
   _rememberFolds(){this.shadowRoot.querySelectorAll('[data-fold]').forEach(el=>{const fold=el.querySelector('.settings-fold');if(fold)this._folds.set(el.dataset.fold,fold.getAttribute('aria-expanded')==='true');});}
   _history(visible,unavailable){
@@ -77,6 +87,7 @@ class SpuelmaschineVerlaufCard extends HTMLElement {
   }
   _render() {
     if (!this._config || !this._hass) return;
+    if(this._familyAccess&&!this._familyAccess.view&&!this._hass.user?.is_admin){this.shadowRoot.innerHTML=`<style>${UI_CSS}</style>${notice('Spülmaschine ist für deine Rolle nicht freigegeben.')}`;return;}
     if (!this._canSettings()) this._settings = false;
     const history = this._hass.states[this._config.entity];
     const duty = this._hass.states[this._config.duty_entity];

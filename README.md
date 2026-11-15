@@ -63,7 +63,7 @@ Die Karte hat keine Versionszeile und keinen Status oben rechts. Der aufklappbar
 3. Aus der Blaupause eine Automation anlegen. Tag-ID, Verlaufssensor, Diensteinteilung und die vier unterschiedlichen Companion-App-Geräte auswählen.
 4. Bisherige Automation **Spülmaschine – NFC Ausräumen bestätigen** deaktivieren und neue Automation aktivieren. Keine weitere Automation darf für denselben Scan den Dienst wechseln.
 
-Der Scan speichert sofort Ausräumer und Zeitpunkt. Vera und Manuel können jeden offenen Spülgang abschließen; dabei bleibt der Dienst unverändert. Maximilian und Paul dürfen nur scannen, wenn sowohl die aktuelle Diensteinteilung als auch der offene Spülgang zu ihnen passen. Danach wechselt der Dienst zum anderen Kind. Unbekannte Geräte und Scans ohne offenen Spülgang ändern nichts. Wiederholte Scans erzeugen keinen zweiten Eintrag oder Dienstwechsel.
+Der Scan speichert sofort Ausräumer und Zeitpunkt. Das Rollenrecht „Unabhängig vom Dienst bestätigen“ erlaubt jeden offenen Spülgang; dabei bleibt der Dienst unverändert. Maximilian und Paul dürfen nur scannen, wenn sowohl die aktuelle Diensteinteilung als auch der offene Spülgang zu ihnen passen. Danach wechselt der Dienst zum anderen Kind. Unbekannte Geräte und Scans ohne offenen Spülgang ändern nichts. Wiederholte Scans erzeugen keinen zweiten Eintrag oder Dienstwechsel.
 
 Die Prüfung erfolgt anhand der registrierten Companion-App-Geräte-ID. Dieselbe Geräte-ID darf nicht mehreren Personen zugeordnet sein. Ein physisches Lesen des NFC-Tags durch andere Personen lässt sich nicht verhindern; ihre Scans werden verworfen. Bestehende Access-Control-Freigaben für NFC bleiben erforderlich.
 
@@ -77,23 +77,11 @@ Der Verlauf ist nach Monat und Jahr gruppiert. Die Monatsgruppen sind einzeln au
 
 Das Zahnrad öffnet die Einstellungen mit Versionsnummer und Statistik. Je Monat werden Gesamtanzahl und Anzahl für Maximilian, Paul sowie Vera / Manuel angezeigt. Die Statistik zählt **alle** gespeicherten Ausräumvorgänge, unabhängig von der Begrenzung des Verlaufs. Offene Spülgänge zählen nicht. Automatische Elternzuordnungen ohne Scan werden mitgezählt und mit ihrer Anzahl ausdrücklich gekennzeichnet. Die Monatsstatistik wird in der HA-Zeitzone berechnet.
 
-Einstellungen werden nur den HA-Konten Vera und Manuel angezeigt. Ohne zusätzliche Konfiguration erkennt die Karte den ersten Namensteil des angemeldeten HA-Benutzers (Vera oder Manuel, Groß-/Kleinschreibung egal, z. B. auch Manuel Wagner). Adminstatus allein genügt nicht. Bei anderen Kontonamen oder für eine feste Kontozuordnung die beiden tatsächlichen **HA-Benutzer-IDs** in der Karte ergänzen (keine iPhone-Geräte-IDs):
-
-```yaml
-settings_users:
-  - HIER_VERAS_HA_BENUTZER_ID
-  - HIER_MANUELS_HA_BENUTZER_ID
-```
-
-Eine ausdrücklich gesetzte Liste ersetzt die Namenserkennung; `settings_users: []` blendet Einstellungen für alle aus. Diese Einstellung steuert die Sichtbarkeit der Kartenansicht. Die Statistik liegt als Attribut `statistik` auf demselben Verlaufssensor und unterliegt dessen bestehenden HA-/Access-Control-Leserechten.
-
-Update über Marketplace/HACS installieren, Home Assistant neu starten und Dashboard/Companion-App neu laden. Das bestehende Dashboard-YAML bleibt gültig. NFC-Blaupause und Benachrichtigungsautomationen müssen für dieses Update nicht verändert werden.
-
-Validierung 0.3.0: 23 Tests einschließlich Monatsgrenzen in Europe/Berlin, Jahreswechsel, vollständiger Statistik, zusammengefassten Eltern und gekennzeichneten automatischen Zuordnungen. DOM-Prüfungen für Monatssortierung, Klappzustände, Einstellungsrechte und Versionsanzeige. Ein visueller Live-Test in HA steht aus.
+Statistik und Einstellungen werden über **Family Access → Spülmaschine → Statistik und Einstellungen ansehen** freigegeben. `settings_users` ist eine veraltete Kartenoption und vergibt keine Rechte mehr. Ohne Family Access werden die bisherigen Familiennamen beim ersten Verbindungsaufbau als Altberechtigung verwendet. Individuelle, bisher nur in Karten-YAML gespeicherte Statistikfreigaben bitte einmalig in Family Access auf die passende Rolle übertragen. Statistikattribute bleiben zusätzlich von den nativen Leserechten auf den Verlaufssensor abhängig.
 
 ## Gesamtstatistik und Logo ab 0.3.1
 
-Die Statistik in den Einstellungen zeigt **eine Gesamtübersicht über den gesamten gespeicherten Zeitraum**, ohne Monatsunterteilung: Maximilian, Paul, Vera / Manuel und Gesamtanzahl. Automatische Elternzuordnungen ohne Scan bleiben mit ihrer Anzahl gekennzeichnet. Die Monatsgruppierung gilt weiterhin nur für den Verlauf. Einstellungen und Versionsnummer bleiben ausschließlich für Vera/Manuel sichtbar.
+Die Statistik in den Einstellungen zeigt **eine Gesamtübersicht über den gesamten gespeicherten Zeitraum**, ohne Monatsunterteilung: Maximilian, Paul, Vera / Manuel und Gesamtanzahl. Automatische Elternzuordnungen ohne Scan bleiben mit ihrer Anzahl gekennzeichnet. Die Monatsgruppierung gilt weiterhin nur für den Verlauf. Einstellungen und Versionsnummer werden über das Statistikrecht der Rolle freigegeben.
 
 Die Integration enthält jetzt ein eigenes transparentes Spülmaschinen-Logo mit Erledigt-Häkchen unter `custom_components/spuelmaschine_verlauf/brand/icon.png` (256 × 256) und `icon@2x.png` (512 × 512). Home Assistant und der aktuelle Marketplace unterstützen diese lokalen Markenbilder. Anzeige nach dem Update und Neustart prüfen; zwischengespeicherte Marketplace-Bilder können verzögert aktualisiert werden. Für ältere HACS-Versionen kann die Darstellung abweichen.
 
@@ -103,7 +91,7 @@ Update über Marketplace installieren, HA neu starten und Dashboard/Companion-Ap
 
 ## Gemeinsame Oberfläche ab 0.4.0
 
-Die Karte verwendet HA UI Kit **1.0.0**, fest mitgeliefert unter `frontend/family-ui/1.0.0/`. Navigation, Einstellungen, Klappbereiche, Symbole, Schrift, Farben und Abstände stammen aus dem gemeinsamen Modul. Die Versionszeile steht weiterhin nur in den Einstellungen für Vera/Manuel. Keine Zusatzinstallation, keine externen Laufzeitaufrufe. Bestehende Dashboard-YAML, Daten und Berechtigungen bleiben gültig. Nach dem Marketplace-Update HA neu starten und Dashboard/App neu laden.
+Die Karte verwendet HA UI Kit **1.0.0**, fest mitgeliefert unter `frontend/family-ui/1.0.0/`. Navigation, Einstellungen, Klappbereiche, Symbole, Schrift, Farben und Abstände stammen aus dem gemeinsamen Modul. Die Versionszeile steht in den über Rollen freigegebenen Einstellungen. Keine Zusatzinstallation, keine externen Laufzeitaufrufe. Bestehende Dashboard-YAML, Daten und Berechtigungen bleiben gültig. Nach dem Marketplace-Update HA neu starten und Dashboard/App neu laden.
 
 ## UI-Kit-Update 0.4.1
 
@@ -113,6 +101,17 @@ Die aktive Karte verwendet nun HA UI Kit **1.1.0** aus dem lokalen Ordner `front
 
 Aktive UI-Version: **1.2.1**, lokal unter `frontend/family-ui/1.2.1/`. Gemeinsame Bausteine für Aufgaben/Auswahlfelder beziehungsweise Statistik werden direkt genutzt. Daten, Funktionen, Karten-YAML und Berechtigungen bleiben gültig. Nach dem Update HA neu starten und Dashboard/App neu laden.
 
-## Strikte UI-Kit-Übereinstimmung ab 0.4.3
+## Strikte UI-Kit-Übereinstimmung ab 0.5.0
 
 Die Karten injizieren ausschließlich `UI_CSS` aus HA UI Kit 1.2.1. Es gibt keine lokalen visuellen CSS-Regeln. Navigation, Zeilen, Verlaufsgruppen/Zähler, Hinweise und Statistiken verwenden die gemeinsamen Komponenten. Browserprüfungen liegen unter `tests/ui-browser.cjs` und laufen im Workflow „UI Kit browser verification“. Sie vergleichen die Gestaltung mit einer Kit-Referenzkarte bei 320/375/390/430/1100 px, hell/dunkel, einschließlich Rollenansichten, Zustandsaktualisierung und gespeicherten Klappzuständen.
+
+
+## Zentrale Rollenrechte
+
+Rollenrechte: Verlauf ansehen, eigenen Ausräumdienst bestätigen, unabhängig vom Dienst bestätigen und Spülgänge manuell erfassen. Der NFC-Blueprint verwendet dieselben Backendprüfungen. Eine angemeldete Person kann keine fremde Identität vortäuschen. Bestehende Gerätezuordnungen bleiben erhalten. Für bestehende Automationen den aktualisierten Blueprint erneut importieren.
+
+Berechtigungen werden jetzt in **Family Access → Anwendung → Rolle** verwaltet. Benutzer können mehrere Rollen erhalten; ihre Freigaben ergänzen sich. Vorhandene Anwendungsrechte werden einmalig in Rollen mit dem Zusatz „übernommen“ importiert und den bisherigen Benutzern zugeordnet. Dashboardfreigaben und die Aktivierung der Dashboardnavigation werden dadurch nicht verändert.
+
+Zum Entziehen eines Rechts alle zugewiesenen Rollen einschließlich übernommener Rollen prüfen. Neue Benutzer erhalten nach der Übernahme keine automatischen Anwendungsrechte. Echte HA-Administratoren behalten Vollzugriff zur Wiederherstellung. Geräte-, Eigentümer- und externe Kontoberechtigungen gelten zusätzlich; eine Rolle erzeugt keine HA-Administratorrechte.
+
+**Aktualisierung:** zuerst Family Access Manager 1.1.0 oder neuer, danach die beteiligten Anwendungen aktualisieren und Home Assistant neu starten. Solange Family Access nicht eingerichtet ist, bleibt die bisherige Rechtevergabe erhalten. Ist Family Access eingerichtet, aber nicht verfügbar oder zu alt, werden Anwendungsaktionen für normale Benutzer abgelehnt. Lokale Benutzer-/Personen-, Geräte- und Musikkontozuordnungen bleiben für Identität und Eigentum erhalten; Rechte werden zentral vergeben.

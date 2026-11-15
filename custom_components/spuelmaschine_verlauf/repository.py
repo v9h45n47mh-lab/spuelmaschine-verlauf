@@ -78,7 +78,7 @@ class Repository:
             db.execute("BEGIN IMMEDIATE")
             return self._insert(db, assigned_to, cycle_key)
 
-    def record_emptied(self, cycle_id, person):
+    def record_emptied(self, cycle_id, person, override_duty=False):
         if person not in PEOPLE:
             raise ValueError('Unbekannte Person.')
         with self.connect() as db:
@@ -86,7 +86,7 @@ class Repository:
             row = db.execute('SELECT * FROM cycles WHERE id=?', (cycle_id,)).fetchone()
             if row is None:
                 raise ValueError('Spülgang nicht gefunden.')
-            if person in CHILDREN and person != row['assigned_to']:
+            if person in CHILDREN and person != row['assigned_to'] and not override_duty:
                 raise ValueError('Dieses Kind ist für den Spülgang nicht zuständig.')
             if row['status'] == 'erledigt':
                 if row['emptied_by'] == person:
